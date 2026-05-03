@@ -1,0 +1,31 @@
+{
+  "version": "1",
+  "metadata": {
+    "name": "CastPoster",
+    "description": "Post casts to Farcaster",
+    "icons": [
+      {
+        "src": "https://castposter.example.com/icon-192.png",
+        "sizes": "192x192",
+        "type": "image/png"
+      }
+    ]
+  },
+  "accountAssociation": {
+    "payload": "TODO: Replace with signed payload from https://farcaster.xyz/~/developers/mini-apps/manifest?domain=YOUR_DOMAIN",
+    "signature": "TODO: Signature from Farcaster signer"
+  },
+  "frame": {
+    "version": "1",
+    "title": "CastPoster",
+    "description": "Compose and post casts",
+    "icon": "https://castposter.example.com/icon.png",
+    "homebrew": {
+      "backgroundColor": "#ffffff",
+      "tabBar": {
+        "icon": "https://castposter.example.com/tab-icon.png",
+        "backgroundColor": "#ffffff"
+      }
+    }
+  }
+}
