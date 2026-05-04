@@ -8,12 +8,12 @@
   <meta name="description" content="Turn any Farcaster cast into a collectible NFT concept on Base.">
   <meta property="og:title" content="CastMint — Cast to NFT">
   <meta property="og:description" content="Turn any Farcaster cast into a collectible NFT concept on Base.">
-  <meta property="og:image" content="https://castposter.vercel.app/og.png?v=6">
+  <meta property="og:image" content="https://castposter.vercel.app/og.png?v=7">
   <meta name="twitter:card" content="summary_large_image">
   <link rel="canonical" href="https://castposter.vercel.app/">
 
-  <meta name="fc:miniapp" content='{"version":"1","imageUrl":"https://castposter.vercel.app/og.png?v=6","button":{"title":"Create Cast NFT","action":{"type":"launch_frame","name":"CastMint","url":"https://castposter.vercel.app/?v=6","splashImageUrl":"https://castposter.vercel.app/icon.png?v=6","splashBackgroundColor":"#070816"}}}' />
-  <meta name="fc:frame" content='{"version":"1","imageUrl":"https://castposter.vercel.app/og.png?v=6","button":{"title":"Create Cast NFT","action":{"type":"launch_frame","name":"CastMint","url":"https://castposter.vercel.app/?v=6","splashImageUrl":"https://castposter.vercel.app/icon.png?v=6","splashBackgroundColor":"#070816"}}}' />
+  <meta name="fc:miniapp" content='{"version":"1","imageUrl":"https://castposter.vercel.app/og.png?v=7","button":{"title":"Create Cast NFT","action":{"type":"launch_frame","name":"CastMint","url":"https://castposter.vercel.app/?v=7","splashImageUrl":"https://castposter.vercel.app/icon.png?v=7","splashBackgroundColor":"#070816"}}}' />
+  <meta name="fc:frame" content='{"version":"1","imageUrl":"https://castposter.vercel.app/og.png?v=7","button":{"title":"Create Cast NFT","action":{"type":"launch_frame","name":"CastMint","url":"https://castposter.vercel.app/?v=7","splashImageUrl":"https://castposter.vercel.app/icon.png?v=7","splashBackgroundColor":"#070816"}}}' />
 
   <style>
     :root {
@@ -55,7 +55,7 @@
       animation: gridDrift 14s linear infinite;
     }
 
-    button, input, textarea { font: inherit; }
+    button, input { font: inherit; }
 
     .app-shell {
       width: min(100%, 1120px);
@@ -134,7 +134,29 @@
     }
     p { margin: 0; color: var(--muted); font-size: 16px; line-height: 1.65; max-width: 34rem; }
 
-    .action-stack { display: grid; gap: 10px; position: relative; z-index: 1; }
+    .hero-hint {
+      display: grid;
+      grid-template-columns: auto 1fr;
+      gap: 10px 12px;
+      position: relative;
+      z-index: 1;
+      padding: 16px;
+      border: 1px solid rgba(255,255,255,.12);
+      border-radius: 22px;
+      background: rgba(255,255,255,.055);
+    }
+    .hero-hint span {
+      display: grid;
+      place-items: center;
+      width: 28px;
+      height: 28px;
+      border-radius: 999px;
+      color: #08111f;
+      background: linear-gradient(135deg, var(--cyan), var(--pink));
+      font-size: 11px;
+      font-weight: 950;
+    }
+    .hero-hint strong { align-self: center; font-size: 13px; letter-spacing: -.01em; }
     button {
       border: 0;
       border-radius: 16px;
@@ -224,7 +246,7 @@
     }
     label { display: grid; gap: 8px; margin-bottom: 12px; }
     label span { color: #d7dded; font-size: 12px; font-weight: 850; }
-    input, textarea {
+    input {
       width: 100%;
       border: 1px solid rgba(255,255,255,.13);
       border-radius: 16px;
@@ -232,10 +254,8 @@
       background: rgba(255,255,255,.06);
       padding: 13px 14px;
       outline: 0;
-      resize: vertical;
     }
-    input:focus, textarea:focus { border-color: rgba(85, 231, 255, .55); box-shadow: 0 0 0 4px rgba(85,231,255,.08); }
-    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    input:focus { border-color: rgba(85, 231, 255, .55); box-shadow: 0 0 0 4px rgba(85,231,255,.08); }
     .primary-btn {
       width: 100%;
       color: #08111f;
@@ -289,7 +309,6 @@
     @media (max-width: 520px) {
       .app-shell { padding: 10px; }
       .hero-panel, .preview-card, .control-card { border-radius: 24px; }
-      .grid-2 { grid-template-columns: 1fr; }
       .preview-card { min-height: 500px; padding: 14px; }
       .nft-frame { width: min(100%, 330px); }
     }

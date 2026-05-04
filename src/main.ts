@@ -8,8 +8,7 @@ import {
   normalizeCastUrl,
 } from './castNft';
 
-const APP_URL = 'https://castposter.vercel.app/?v=6';
-const SAMPLE_CAST = 'Mint the moment: turning this Farcaster cast into a collectible on Base. ✨';
+const SAMPLE_CAST = 'Paste a Farcaster cast URL to generate the NFT preview.';
 const PUBLIC_FARCASTER_API = 'https://api.farcaster.xyz/v2';
 
 const state = {
@@ -47,7 +46,7 @@ function renderPreview() {
     <div class="nft-frame">
       <div class="nft-topline"><span>CAST NFT</span><span>#${shortAddress(seed)}</span></div>
       <div class="quote-mark">“</div>
-      <p class="cast-quote">${escapeHtml(state.castText || 'Paste a cast URL or text to preview your collectible.')}</p>
+      <p class="cast-quote">${escapeHtml(state.castText || 'Paste a cast URL to preview your collectible.')}</p>
       <div class="nft-footer">
         <div><small>Creator</small><strong>@${escapeHtml(state.author || 'caster')}</strong></div>
         <div><small>Chain</small><strong>Base</strong></div>
@@ -63,11 +62,7 @@ function renderPreview() {
 }
 
 function syncInputs() {
-  const castInput = document.getElementById('castText') as HTMLTextAreaElement | null;
-  const authorInput = document.getElementById('authorName') as HTMLInputElement | null;
   const urlInput = document.getElementById('castUrl') as HTMLInputElement | null;
-  if (castInput) castInput.value = state.castText;
-  if (authorInput) authorInput.value = state.author;
   if (urlInput) urlInput.value = state.castUrl;
 }
 
@@ -145,19 +140,19 @@ function renderApp() {
         </nav>
         <div class="hero-copy">
           <div class="badge">Farcaster Mini App · Base NFT Concept</div>
-          <h1>Turn any cast into a collectible NFT.</h1>
-          <p>Paste a Farcaster cast, generate an animated NFT card, then mint/share the concept from one clean mobile flow.</p>
+          <h1>Paste cast URL. Get NFT preview.</h1>
+          <p>No manual text or creator fields. CastMint reads the original cast and updates the animated NFT card automatically.</p>
         </div>
-        <div class="action-stack"><button id="loadSampleBtn" class="ghost-btn">✨ Try sample cast</button><button id="shareBtn" class="ghost-btn">📣 Share concept</button></div>
+        <div class="hero-hint">
+          <span>01</span><strong>Paste URL</strong>
+          <span>02</span><strong>Auto-read cast</strong>
+          <span>03</span><strong>Preview NFT</strong>
+        </div>
       </section>
       <section class="workspace">
         <div id="previewCard" class="preview-card"></div>
         <form id="castForm" class="control-card">
-          <label><span>Cast text</span><textarea id="castText" maxlength="280" rows="4" placeholder="Paste the cast you want to immortalize..."></textarea></label>
-          <div class="grid-2">
-            <label><span>Creator</span><input id="authorName" maxlength="32" placeholder="username" /></label>
-            <label><span>Cast URL</span><input id="castUrl" inputmode="url" placeholder="https://warpcast.com/username/0x..." /></label>
-          </div>
+          <label><span>Cast URL</span><input id="castUrl" inputmode="url" autocomplete="off" placeholder="https://warpcast.com/username/0x..." /></label>
           <button id="generateBtn" class="primary-btn" type="submit">Generate NFT Preview</button>
           <button id="mintBtn" class="mint-btn" type="button">Mint on Base Soon</button>
           <div id="metadataPanel" class="metadata-panel"></div><div id="status" class="status">${escapeHtml(state.status)}</div>
@@ -170,17 +165,11 @@ function renderApp() {
 
 function bindEvents() {
   const form = document.getElementById('castForm') as HTMLFormElement | null;
-  const castInput = document.getElementById('castText') as HTMLTextAreaElement | null;
-  const authorInput = document.getElementById('authorName') as HTMLInputElement | null;
   const urlInput = document.getElementById('castUrl') as HTMLInputElement | null;
-  const sampleBtn = document.getElementById('loadSampleBtn') as HTMLButtonElement | null;
   const mintBtn = document.getElementById('mintBtn') as HTMLButtonElement | null;
-  const shareBtn = document.getElementById('shareBtn') as HTMLButtonElement | null;
   const closeBtn = document.getElementById('closeBtn') as HTMLButtonElement | null;
 
   const updateFromInputs = () => {
-    state.castText = castInput?.value.trim() || '';
-    state.author = authorInput?.value.trim().replace(/^@/, '') || 'caster';
     state.castUrl = normalizeCastUrl(urlInput?.value || '');
     renderPreview();
   };
@@ -195,11 +184,10 @@ function bindEvents() {
     const fallbackAuthor = extractCastAuthorFromUrl(normalizedUrl);
     if (fallbackAuthor && fallbackAuthor !== 'caster') {
       state.author = fallbackAuthor;
-      if (authorInput) authorInput.value = fallbackAuthor;
       renderPreview();
     }
     if (!getCastHashFromUrl(normalizedUrl)) {
-      setStatus('Cast URL detected. Add the cast text manually if the URL has no cast hash.'); return;
+      setStatus('Cast URL detected, but no cast hash found. Paste a full cast URL.'); return;
     }
 
     setStatus('Fetching cast text from Farcaster…');
@@ -211,26 +199,19 @@ function bindEvents() {
         state.author = resolved.author || fallbackAuthor || state.author;
         state.castUrl = normalizedUrl;
         syncInputs(); renderPreview(); setStatus('Cast text loaded from URL. NFT preview updated.');
-      } else setStatus('Cast URL saved, but the public API could not find the cast text. Paste text manually as fallback.');
+      } else setStatus('Cast URL saved, but the public API could not find the original cast text.');
     } catch (err) {
       if (requestId !== castLookupRequest) return;
       console.warn('Cast URL lookup failed:', err);
-      setStatus('Cast URL saved. Public lookup is unavailable here, so paste the cast text manually as fallback.');
+      setStatus('Cast URL saved. Public lookup is unavailable right now, try again in a moment.');
     }
   };
 
-  castInput?.addEventListener('input', updateFromInputs);
-  authorInput?.addEventListener('input', updateFromInputs);
   urlInput?.addEventListener('input', () => { updateFromInputs(); window.setTimeout(resolveUrlInput, 250); });
   urlInput?.addEventListener('change', resolveUrlInput);
 
-  form?.addEventListener('submit', (event) => { event.preventDefault(); updateFromInputs(); setStatus('NFT preview generated. Mint contract wiring is the next production step.'); });
-  sampleBtn?.addEventListener('click', () => { state.castText = SAMPLE_CAST; state.author = 'gyoo'; state.castUrl = 'https://warpcast.com/gyoo/0xsample'; syncInputs(); renderPreview(); setStatus('Sample cast loaded. Edit it or share the concept.'); });
+  form?.addEventListener('submit', (event) => { event.preventDefault(); resolveUrlInput(); });
   mintBtn?.addEventListener('click', () => setStatus('Mint flow placeholder: next step is ERC-721 contract + IPFS metadata upload.'));
-  shareBtn?.addEventListener('click', async () => {
-    try { setStatus('Opening Farcaster composer…'); await sdk.actions.composeCast({ text: `I am turning a Farcaster cast into a collectible NFT on Base with CastMint ✨\n\nCast → NFT, minted from the moment.`, embeds: [APP_URL] }); setStatus('Composer opened.'); }
-    catch (err) { const message = err instanceof Error ? err.message : String(err); setStatus(`Composer unavailable: ${message}`); }
-  });
   closeBtn?.addEventListener('click', async () => {
     try { setStatus('Closing mini app…'); await sdk.actions.close(); }
     catch { if (window.history.length > 1) window.history.back(); else window.location.href = 'https://farcaster.xyz/'; }
