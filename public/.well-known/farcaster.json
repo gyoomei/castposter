@@ -1,16 +1,27 @@
 {
   "accountAssociation": {
-    "payload": "TODO: Replace with signed payload from https://farcaster.xyz/~/developers/mini-apps/manifest?domain=YOUR_DOMAIN",
-    "signature": "TODO: Signature from Farcaster signer"
+    "header": "eyJmaWQiOjI0MTQ3MCwidHlwZSI6ImN1c3RvZHkiLCJrZXkiOiIweDVmOWVjRDkwMzI2OEIyODlkZjBEM2IxZjU0RTI5MzI5NzRGRDQxZEUifQ",
+    "payload": "eyJkb21haW4iOiJjYXN0cG9zdGVyLnZlcmNlbC5hcHAifQ",
+    "signature": "scgFX8SI1Ug/gpRWkYgt9s7dSiU4t0eDA24X8S+t4lAekUcuhw/1mzG8rDc0+FfYPqQprbDeTKMmKE+qjKEdBBw="
   },
   "miniapp": {
     "version": "1",
     "name": "CastPoster",
-    "iconUrl": "https://castposter.vercel.app/icon.png?v=2",
-    "homeUrl": "https://castposter.vercel.app/?v=2",
-    "imageUrl": "https://castposter.vercel.app/og.png?v=2",
+    "iconUrl": "https://castposter.vercel.app/icon.png?v=3",
+    "homeUrl": "https://castposter.vercel.app/?v=3",
+    "imageUrl": "https://castposter.vercel.app/og.png?v=3",
     "buttonTitle": "Open CastPoster",
-    "splashImageUrl": "https://castposter.vercel.app/icon.png?v=2",
+    "splashImageUrl": "https://castposter.vercel.app/icon.png?v=3",
+    "splashBackgroundColor": "#0f172a"
+  },
+  "frame": {
+    "version": "1",
+    "name": "CastPoster",
+    "iconUrl": "https://castposter.vercel.app/icon.png?v=3",
+    "homeUrl": "https://castposter.vercel.app/?v=3",
+    "imageUrl": "https://castposter.vercel.app/og.png?v=3",
+    "buttonTitle": "Open CastPoster",
+    "splashImageUrl": "https://castposter.vercel.app/icon.png?v=3",
     "splashBackgroundColor": "#0f172a"
   }
 }
