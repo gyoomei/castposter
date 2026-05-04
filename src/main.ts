@@ -119,12 +119,7 @@ function renderPreview() {
     </div>
   `;
 
-  metadataPanel.innerHTML = `
-    <div class="meta-row"><span>Name</span><strong>${escapeHtml(metadata.name)}</strong></div>
-    <div class="meta-row"><span>Source</span><strong>Farcaster Cast</strong></div>
-    <div class="meta-row"><span>Seed</span><strong>${seed}</strong></div>
-    <div class="meta-row"><span>Mint</span><strong>${mintCompatibilityWarning ? 'ABI needed' : 'Ready on Base'}</strong></div>
-  `;
+  metadataPanel.innerHTML = '';
 }
 
 function syncInputs() {
