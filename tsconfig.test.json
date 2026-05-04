@@ -1,0 +1,13 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "outDir": "dist-test",
+    "module": "ES2022",
+    "moduleResolution": "Bundler",
+    "declaration": false,
+    "sourceMap": false,
+    "noEmit": false,
+    "allowImportingTsExtensions": false
+  },
+  "include": ["src/castNft.ts"]
+}
