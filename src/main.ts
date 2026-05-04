@@ -1,5 +1,5 @@
 import { sdk } from '@farcaster/miniapp-sdk';
-import { encodeFunctionData, formatEther, keccak256, toBytes } from 'viem';
+import { decodeFunctionResult, encodeFunctionData, formatEther, keccak256, toBytes } from 'viem';
 import {
   buildCastMintTokenUri,
   buildCastNftMetadata,
@@ -14,7 +14,6 @@ import {
 const SAMPLE_CAST = 'Paste a Farcaster cast URL to generate the NFT preview.';
 const PUBLIC_FARCASTER_API = 'https://api.farcaster.xyz/v2';
 const BASE_CHAIN_ID_HEX = '0x2105';
-const MINT_PRICE_WEI = 0n;
 const DEFAULT_MINT_CONTRACT_ADDRESS = '0xd70309f170C88012727A725079f37D621Cb679c3';
 const MINT_CONTRACT_ADDRESS = import.meta.env.VITE_CASTMINT_CONTRACT_ADDRESS || DEFAULT_MINT_CONTRACT_ADDRESS;
 const MINT_FUNCTION_NAME = import.meta.env.VITE_CASTMINT_FUNCTION_NAME || 'mintTo';
@@ -22,17 +21,28 @@ const MINT_ABI = [
   {
     type: 'function',
     name: MINT_FUNCTION_NAME,
-    stateMutability: MINT_PRICE_WEI > 0n ? 'payable' : 'nonpayable',
+    stateMutability: 'payable',
     inputs: [
       { name: 'to', type: 'address' },
       { name: 'tokenURI', type: 'string' },
     ],
-    outputs: [],
+    outputs: [{ name: 'tokenId', type: 'uint256' }],
+  },
+] as const;
+const MINT_PRICE_ABI = [
+  {
+    type: 'function',
+    name: 'mintPrice',
+    stateMutability: 'view',
+    inputs: [],
+    outputs: [{ name: 'price', type: 'uint256' }],
   },
 ] as const;
 const EXPECTED_MINT_SELECTOR = keccak256(toBytes(`${MINT_FUNCTION_NAME}(address,string)`)).slice(2, 10).toLowerCase();
+const EXPECTED_MINT_SELECTOR_IN_BYTECODE = EXPECTED_MINT_SELECTOR.replace(/^0+/, '') || EXPECTED_MINT_SELECTOR;
 let mintCompatibilityChecked = false;
 let mintCompatibilityWarning = '';
+let mintPriceWei = 0n;
 
 type EthereumProvider = {
   request: (args: { method: string; params?: unknown[] | Record<string, unknown> }) => Promise<unknown>;
@@ -65,7 +75,36 @@ function getMintButtonLabel() {
   if (state.minting) return 'Minting on Base…';
   if (!isValidEvmAddress(MINT_CONTRACT_ADDRESS)) return 'Mint Contract Needed';
   if (mintCompatibilityWarning) return 'Mint ABI Needed';
-  return MINT_PRICE_WEI > 0n ? `Mint on Base · ${formatEther(MINT_PRICE_WEI)} ETH` : 'Mint on Base';
+  return mintPriceWei > 0n ? `Mint on Base · ${formatEther(mintPriceWei)} ETH` : 'Mint on Base';
+}
+
+async function readMintPrice() {
+  if (!isValidEvmAddress(MINT_CONTRACT_ADDRESS)) return 0n;
+  try {
+    const response = await fetch('https://base-rpc.publicnode.com', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        jsonrpc: '2.0',
+        id: 2,
+        method: 'eth_call',
+        params: [{
+          to: MINT_CONTRACT_ADDRESS,
+          data: encodeFunctionData({ abi: MINT_PRICE_ABI, functionName: 'mintPrice' }),
+        }, 'latest'],
+      }),
+    });
+    const payload = await response.json();
+    const result = typeof payload?.result === 'string' ? payload.result : '0x';
+    if (result && result !== '0x') {
+      mintPriceWei = decodeFunctionResult({ abi: MINT_PRICE_ABI, functionName: 'mintPrice', data: result }) as bigint;
+    }
+  } catch (err) {
+    console.warn('Mint price read skipped:', err);
+  } finally {
+    syncMintButton();
+  }
+  return mintPriceWei;
 }
 
 async function checkMintCompatibility() {
@@ -84,12 +123,13 @@ async function checkMintCompatibility() {
     });
     const payload = await response.json();
     const code = String(payload?.result || '').toLowerCase();
-    if (code && code !== '0x' && !code.includes(EXPECTED_MINT_SELECTOR)) {
+    if (code && code !== '0x' && !code.includes(EXPECTED_MINT_SELECTOR) && !code.includes(EXPECTED_MINT_SELECTOR_IN_BYTECODE)) {
       mintCompatibilityWarning = `Mint ABI mismatch: contract ${MINT_CONTRACT_ADDRESS} does not expose ${MINT_FUNCTION_NAME}(address,string).`;
-      setStatus('Mint contract found, but ABI belum cocok. Need actual mint function/source before live mint.');
+      setStatus('Mint contract found, but ABI belum cocok.');
       renderPreview();
       return false;
     }
+    await readMintPrice();
   } catch (err) {
     console.warn('Mint compatibility check skipped:', err);
   } finally {
@@ -247,7 +287,7 @@ async function mintCastNft() {
   }
   const isMintCompatible = await checkMintCompatibility();
   if (!isMintCompatible) {
-    setStatus('Mint ditahan: contract Base sudah ditemukan, tapi ABI mint belum cocok. Need actual mint function/source first.');
+    setStatus('Mint ditahan: ABI mint belum cocok.');
     return;
   }
 
@@ -276,7 +316,7 @@ async function mintCastNft() {
         from: account,
         to: MINT_CONTRACT_ADDRESS,
         data,
-        value: MINT_PRICE_WEI > 0n ? `0x${MINT_PRICE_WEI.toString(16)}` : '0x0',
+        value: mintPriceWei > 0n ? `0x${mintPriceWei.toString(16)}` : '0x0',
       }],
     }) as string;
 
