@@ -8,7 +8,7 @@ import {
   normalizeCastUrl,
 } from './castNft';
 
-const APP_URL = 'https://castposter.vercel.app/?v=5';
+const APP_URL = 'https://castposter.vercel.app/?v=6';
 const SAMPLE_CAST = 'Mint the moment: turning this Farcaster cast into a collectible on Base. ✨';
 const PUBLIC_FARCASTER_API = 'https://api.farcaster.xyz/v2';
 
@@ -118,8 +118,18 @@ async function resolveCastFromUrl(rawUrl: string) {
   const userPayload = await fetchJson(`${PUBLIC_FARCASTER_API}/user-by-username?username=${encodeURIComponent(username)}`);
   const fid = userPayload?.result?.user?.fid;
   if (!fid) throw new Error('FID not found');
-  const castsPayload = await fetchJson(`${PUBLIC_FARCASTER_API}/casts?fid=${encodeURIComponent(String(fid))}&limit=50`);
-  return findCastInApiResponse(castsPayload, hash);
+
+  let cursor = '';
+  for (let page = 0; page < 20; page += 1) {
+    const cursorParam = cursor ? `&cursor=${encodeURIComponent(cursor)}` : '';
+    const castsPayload = await fetchJson(`${PUBLIC_FARCASTER_API}/casts?fid=${encodeURIComponent(String(fid))}&limit=50${cursorParam}`);
+    const foundCast = findCastInApiResponse(castsPayload, hash);
+    if (foundCast) return foundCast;
+    cursor = castsPayload?.result?.next?.cursor || castsPayload?.result?.cursor || castsPayload?.next?.cursor || castsPayload?.cursor || '';
+    if (!cursor) break;
+  }
+
+  return null;
 }
 
 function renderApp() {

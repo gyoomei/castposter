@@ -7,21 +7,21 @@
   "miniapp": {
     "version": "1",
     "name": "CastMint",
-    "iconUrl": "https://castposter.vercel.app/icon.png?v=5",
-    "homeUrl": "https://castposter.vercel.app/?v=5",
-    "imageUrl": "https://castposter.vercel.app/og.png?v=5",
+    "iconUrl": "https://castposter.vercel.app/icon.png?v=6",
+    "homeUrl": "https://castposter.vercel.app/?v=6",
+    "imageUrl": "https://castposter.vercel.app/og.png?v=6",
     "buttonTitle": "Create Cast NFT",
-    "splashImageUrl": "https://castposter.vercel.app/icon.png?v=5",
+    "splashImageUrl": "https://castposter.vercel.app/icon.png?v=6",
     "splashBackgroundColor": "#070816"
   },
   "frame": {
     "version": "1",
     "name": "CastMint",
-    "iconUrl": "https://castposter.vercel.app/icon.png?v=5",
-    "homeUrl": "https://castposter.vercel.app/?v=5",
-    "imageUrl": "https://castposter.vercel.app/og.png?v=5",
+    "iconUrl": "https://castposter.vercel.app/icon.png?v=6",
+    "homeUrl": "https://castposter.vercel.app/?v=6",
+    "imageUrl": "https://castposter.vercel.app/og.png?v=6",
     "buttonTitle": "Create Cast NFT",
-    "splashImageUrl": "https://castposter.vercel.app/icon.png?v=5",
+    "splashImageUrl": "https://castposter.vercel.app/icon.png?v=6",
     "splashBackgroundColor": "#070816"
   }
 }

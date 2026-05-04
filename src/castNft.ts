@@ -18,12 +18,33 @@ export type CastLookupResult = {
 
 type PublicCast = {
   hash?: string;
+  castHash?: string;
+  merkleRoot?: string;
   text?: string;
   author?: {
     username?: string;
     displayName?: string;
   };
 };
+
+function normalizeHash(value = ''): string {
+  return value.trim().toLowerCase();
+}
+
+function getCastCandidates(payload: unknown): PublicCast[] {
+  const typed = payload as {
+    result?: { casts?: PublicCast[]; cast?: PublicCast };
+    casts?: PublicCast[];
+    cast?: PublicCast;
+  };
+  const candidates = [
+    typed?.result?.casts,
+    typed?.result?.cast ? [typed.result.cast] : null,
+    typed?.casts,
+    typed?.cast ? [typed.cast] : null,
+  ];
+  return candidates.find(Array.isArray) || [];
+}
 
 export function getCastNftSeed(castText: string): string {
   let hash = 0x811c9dc5;
@@ -60,11 +81,15 @@ export function extractCastAuthorFromUrl(rawUrl: string): string {
 }
 
 export function findCastInApiResponse(payload: unknown, targetHash: string): CastLookupResult | null {
-  const casts = (payload as { result?: { casts?: PublicCast[] } })?.result?.casts;
+  const casts = getCastCandidates(payload);
   if (!Array.isArray(casts)) return null;
 
-  const normalizedTarget = targetHash.toLowerCase();
-  const cast = casts.find((item) => item.hash?.toLowerCase() === normalizedTarget);
+  const normalizedTarget = normalizeHash(targetHash);
+  const shortTarget = normalizedTarget.slice(0, 10);
+  const cast = casts.find((item) => {
+    const itemHash = normalizeHash(item.hash || item.castHash || item.merkleRoot || '');
+    return itemHash === normalizedTarget || (shortTarget.length >= 10 && itemHash.startsWith(shortTarget));
+  });
   const text = cast?.text?.trim();
   if (!cast || !text) return null;
 

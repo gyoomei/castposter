@@ -56,4 +56,37 @@ assert.deepEqual(
   'cast text should be extracted from a public cast API response by hash',
 );
 
+
+const singleCastPayload = {
+  result: {
+    cast: {
+      merkleRoot: '0xeba9210d0a8e0bae70c523645d2fb72bf45467af',
+      text: 'Original cast text from direct lookup',
+      author: { username: 'sayligood' },
+    },
+  },
+};
+assert.deepEqual(
+  findCastInApiResponse(singleCastPayload, '0xeba9210d0a8e0bae70c523645d2fb72bf45467af'),
+  { text: 'Original cast text from direct lookup', author: 'sayligood' },
+  'cast text should also be extracted from single cast API payloads',
+);
+
+const shortUrlHashPayload = {
+  result: {
+    casts: [
+      {
+        hash: '0xeba9210d0a8e0bae70c523645d2fb72bf45467af',
+        text: 'Full hash cast should match short cast URLs too',
+        author: { displayName: 'Forger' },
+      },
+    ],
+  },
+};
+assert.deepEqual(
+  findCastInApiResponse(shortUrlHashPayload, '0xeba9210d'),
+  { text: 'Full hash cast should match short cast URLs too', author: 'Forger' },
+  'short Warpcast URL hashes should match full API hashes so preview follows the original cast',
+);
+
 console.log('cast-nft tests passed');

@@ -25,11 +25,29 @@ function extractCastAuthorFromUrl(rawUrl = '') {
   }
 }
 
+function castCandidates(payload) {
+  const candidates = [
+    payload?.result?.casts,
+    payload?.result?.cast ? [payload.result.cast] : null,
+    payload?.casts,
+    payload?.cast ? [payload.cast] : null,
+  ];
+  return candidates.find(Array.isArray) || [];
+}
+
+function normalizeHash(value = '') {
+  return String(value).trim().toLowerCase();
+}
+
 function findCastInApiResponse(payload, targetHash) {
-  const casts = payload?.result?.casts;
+  const casts = castCandidates(payload);
   if (!Array.isArray(casts)) return null;
-  const normalizedTarget = String(targetHash).toLowerCase();
-  const cast = casts.find((item) => item?.hash?.toLowerCase() === normalizedTarget);
+  const normalizedTarget = normalizeHash(targetHash);
+  const shortTarget = normalizedTarget.slice(0, 10);
+  const cast = casts.find((item) => {
+    const itemHash = normalizeHash(item?.hash || item?.castHash || item?.merkleRoot);
+    return itemHash === normalizedTarget || (shortTarget.length >= 10 && itemHash.startsWith(shortTarget));
+  });
   const text = cast?.text?.trim();
   if (!cast || !text) return null;
   return {
@@ -38,14 +56,26 @@ function findCastInApiResponse(payload, targetHash) {
   };
 }
 
+async function tryFetchCastByHub(fid, hash) {
+  const hubUrl = `https://hub-api.neynar.com/v1/castById?fid=${encodeURIComponent(String(fid))}&hash=${encodeURIComponent(hash)}`;
+  try {
+    return findCastInApiResponse(await fetchJson(hubUrl), hash);
+  } catch {
+    return null;
+  }
+}
+
 async function findCastByHash(fid, hash) {
+  const hubCast = await tryFetchCastByHub(fid, hash);
+  if (hubCast) return hubCast;
+
   let cursor = '';
-  for (let page = 0; page < 8; page += 1) {
+  for (let page = 0; page < 20; page += 1) {
     const cursorParam = cursor ? `&cursor=${encodeURIComponent(cursor)}` : '';
     const payload = await fetchJson(`${PUBLIC_FARCASTER_API}/casts?fid=${encodeURIComponent(String(fid))}&limit=50${cursorParam}`);
     const cast = findCastInApiResponse(payload, hash);
     if (cast) return cast;
-    cursor = payload?.result?.next?.cursor || payload?.result?.cursor || '';
+    cursor = payload?.result?.next?.cursor || payload?.result?.cursor || payload?.next?.cursor || payload?.cursor || '';
     if (!cursor) break;
   }
   return null;
