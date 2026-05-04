@@ -2,10 +2,15 @@ import { sdk } from '@farcaster/miniapp-sdk';
 import { decodeFunctionResult, encodeFunctionData, formatEther, keccak256, toBytes } from 'viem';
 import {
   buildCastMintTokenUri,
-  buildCastNftMetadata,
+  CASTMINT_PREVIEW_STYLES,
+  CastMintHistoryItem,
+  CastMintPreviewStyle,
+  createMintHistoryItem,
   extractCastAuthorFromUrl,
   findCastInApiResponse,
+  formatTxHash,
   getCastHashFromUrl,
+  getPreviewStyle,
   getCastNftSeed,
   isValidEvmAddress,
   normalizeCastUrl,
@@ -15,8 +20,9 @@ const SAMPLE_CAST = 'Paste a Farcaster cast URL to generate the NFT preview.';
 const PUBLIC_FARCASTER_API = 'https://api.farcaster.xyz/v2';
 const BASE_CHAIN_ID_HEX = '0x2105';
 const DEFAULT_MINT_CONTRACT_ADDRESS = '0xd70309f170C88012727A725079f37D621Cb679c3';
-const MINT_CONTRACT_ADDRESS = import.meta.env.VITE_CASTMINT_CONTRACT_ADDRESS || DEFAULT_MINT_CONTRACT_ADDRESS;
-const MINT_FUNCTION_NAME = import.meta.env.VITE_CASTMINT_FUNCTION_NAME || 'mintTo';
+const env = import.meta.env as { VITE_CASTMINT_CONTRACT_ADDRESS?: string; VITE_CASTMINT_FUNCTION_NAME?: string };
+const MINT_CONTRACT_ADDRESS = env.VITE_CASTMINT_CONTRACT_ADDRESS || DEFAULT_MINT_CONTRACT_ADDRESS;
+const MINT_FUNCTION_NAME = env.VITE_CASTMINT_FUNCTION_NAME || 'mintTo';
 const MINT_ABI = [
   {
     type: 'function',
@@ -43,6 +49,8 @@ const EXPECTED_MINT_SELECTOR_IN_BYTECODE = EXPECTED_MINT_SELECTOR.replace(/^0+/,
 let mintCompatibilityChecked = false;
 let mintCompatibilityWarning = '';
 let mintPriceWei = 0n;
+const HISTORY_STORAGE_KEY = 'castmint.mintHistory.v1';
+const HISTORY_LIMIT = 5;
 
 type EthereumProvider = {
   request: (args: { method: string; params?: unknown[] | Record<string, unknown> }) => Promise<unknown>;
@@ -55,6 +63,12 @@ const state = {
   status: 'Ready to transform a cast into an NFT concept.',
   minting: false,
   lastMintHash: '',
+  previewStyle: 'neon' as CastMintPreviewStyle,
+  detectedUser: '',
+  isMiniApp: false,
+  addMiniAppAvailable: false,
+  posterUrl: '',
+  history: [] as CastMintHistoryItem[],
 };
 
 let castLookupRequest = 0;
@@ -70,6 +84,72 @@ function escapeHtml(value: string) {
 
 function shortAddress(seed: string) {
   return `${seed.slice(0, 4).toUpperCase()}-${seed.slice(4).toUpperCase()}`;
+}
+
+function shortText(value: string, maxLength = 88) {
+  const clean = value.trim().replace(/\s+/g, ' ');
+  return clean.length > maxLength ? `${clean.slice(0, maxLength - 1)}…` : clean;
+}
+
+function readMintHistory(): CastMintHistoryItem[] {
+  try {
+    const parsed = JSON.parse(localStorage.getItem(HISTORY_STORAGE_KEY) || '[]');
+    if (!Array.isArray(parsed)) return [];
+    return parsed
+      .filter((item) => item && typeof item.txHash === 'string')
+      .map((item) => createMintHistoryItem({
+        castText: String(item.castText || ''),
+        author: String(item.author || 'caster'),
+        castUrl: String(item.castUrl || ''),
+        txHash: String(item.txHash || ''),
+        mintedAt: String(item.mintedAt || ''),
+        style: String(item.style || 'neon'),
+      }))
+      .slice(0, HISTORY_LIMIT);
+  } catch {
+    return [];
+  }
+}
+
+function saveMintHistory(items: CastMintHistoryItem[]) {
+  try { localStorage.setItem(HISTORY_STORAGE_KEY, JSON.stringify(items.slice(0, HISTORY_LIMIT))); }
+  catch (err) { console.warn('Mint history save skipped:', err); }
+}
+
+function addMintHistoryItem(txHash: string) {
+  const item = createMintHistoryItem({
+    castText: state.castText,
+    author: state.author,
+    castUrl: state.castUrl,
+    txHash,
+    style: state.previewStyle,
+  });
+  state.history = [item, ...state.history.filter((entry) => entry.txHash !== txHash)].slice(0, HISTORY_LIMIT);
+  saveMintHistory(state.history);
+  return item;
+}
+
+function renderPosterSvg(item: CastMintHistoryItem) {
+  const seed = getCastNftSeed(`${item.author}:${item.castText}`);
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="1600" viewBox="0 0 1200 1600">
+  <defs><linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#07111f"/><stop offset=".46" stop-color="#1e1b4b"/><stop offset="1" stop-color="#4a044e"/></linearGradient><radialGradient id="a" cx="25%" cy="16%" r="80%"><stop offset="0" stop-color="#55e7ff" stop-opacity=".70"/><stop offset="1" stop-color="#55e7ff" stop-opacity="0"/></radialGradient><radialGradient id="b" cx="82%" cy="80%" r="75%"><stop offset="0" stop-color="#ff5bd7" stop-opacity=".48"/><stop offset="1" stop-color="#ff5bd7" stop-opacity="0"/></radialGradient></defs>
+  <rect width="1200" height="1600" rx="92" fill="url(#bg)"/><rect width="1200" height="1600" rx="92" fill="url(#a)"/><rect width="1200" height="1600" rx="92" fill="url(#b)"/>
+  <rect x="74" y="82" width="1052" height="1436" rx="76" fill="rgba(255,255,255,.075)" stroke="rgba(255,255,255,.30)" stroke-width="3"/>
+  <text x="126" y="176" fill="#dffbff" font-family="Inter,Arial,sans-serif" font-size="42" font-weight="900" letter-spacing="8">CASTMINT</text>
+  <text x="126" y="252" fill="#ffd166" font-family="Inter,Arial,sans-serif" font-size="30" font-weight="900">MINTED ON BASE</text>
+  <text x="126" y="494" fill="rgba(255,255,255,.18)" font-family="Georgia,serif" font-size="220" font-weight="900">“</text>
+  <foreignObject x="126" y="548" width="948" height="520"><div xmlns="http://www.w3.org/1999/xhtml" style="color:#fff;font-family:Inter,Arial,sans-serif;font-size:62px;line-height:1.12;font-weight:950;letter-spacing:-3px;overflow:hidden;">${escapeHtml(shortText(item.castText, 170))}</div></foreignObject>
+  <text x="126" y="1258" fill="#9aa4bd" font-family="Inter,Arial,sans-serif" font-size="30" font-weight="800">CREATOR</text><text x="126" y="1314" fill="#fff" font-family="Inter,Arial,sans-serif" font-size="50" font-weight="950">@${escapeHtml(item.author)}</text>
+  <text x="126" y="1398" fill="#9aa4bd" font-family="Inter,Arial,sans-serif" font-size="28" font-weight="800">TX ${escapeHtml(formatTxHash(item.txHash))}</text>
+  <text x="848" y="1398" fill="#ffe08a" font-family="Inter,Arial,sans-serif" font-size="34" font-weight="950">#${escapeHtml(seed)}</text>
+</svg>`;
+}
+
+function posterDataUrl(item: CastMintHistoryItem) {
+  const bytes = new TextEncoder().encode(renderPosterSvg(item));
+  let binary = '';
+  bytes.forEach((byte) => { binary += String.fromCharCode(byte); });
+  return `data:image/svg+xml;base64,${btoa(binary)}`;
 }
 
 function getMintButtonLabel() {
@@ -144,13 +224,15 @@ function renderPreview() {
   const metadataPanel = document.getElementById('metadataPanel');
   if (!preview || !metadataPanel) return;
 
-  const metadata = buildCastNftMetadata({ castText: state.castText, author: state.author, castUrl: state.castUrl });
   const seed = getCastNftSeed(`${state.author}:${state.castText}`);
+  const styleClass = `style-${getPreviewStyle(state.previewStyle)}`;
+  const styleLabel = CASTMINT_PREVIEW_STYLES.find((item) => item.id === state.previewStyle)?.label || 'Neon';
 
+  preview.className = `preview-card ${styleClass}`;
   preview.innerHTML = `
     <div class="nft-orbit" aria-hidden="true"><span></span><span></span><span></span></div>
     <div class="nft-frame">
-      <div class="nft-topline"><span>CAST NFT</span><span>#${shortAddress(seed)}</span></div>
+      <div class="nft-topline"><span>CAST NFT</span><span>${escapeHtml(styleLabel)} · #${shortAddress(seed)}</span></div>
       <div class="quote-mark">“</div>
       <p class="cast-quote">${escapeHtml(state.castText || 'Paste a cast URL to preview your collectible.')}</p>
       <div class="nft-footer">
@@ -161,6 +243,68 @@ function renderPreview() {
   `;
 
   metadataPanel.innerHTML = '';
+  renderSuccessCard();
+  renderHistory();
+}
+
+function renderStylePicker() {
+  const picker = document.getElementById('stylePicker');
+  if (!picker) return;
+  picker.innerHTML = CASTMINT_PREVIEW_STYLES.map((style) => `
+    <button type="button" class="style-chip ${style.id === state.previewStyle ? 'active' : ''}" data-style="${style.id}">
+      <strong>${escapeHtml(style.label)}</strong><span>${escapeHtml(style.description)}</span>
+    </button>
+  `).join('');
+  picker.querySelectorAll<HTMLButtonElement>('.style-chip').forEach((button) => {
+    button.addEventListener('click', () => {
+      state.previewStyle = getPreviewStyle(button.dataset.style || '');
+      state.posterUrl = '';
+      renderStylePicker();
+      renderPreview();
+      setStatus(`Preview style switched to ${CASTMINT_PREVIEW_STYLES.find((item) => item.id === state.previewStyle)?.label || 'Neon'}.`);
+    });
+  });
+}
+
+function renderSuccessCard() {
+  const card = document.getElementById('successCard');
+  if (!card) return;
+  if (!state.lastMintHash) { card.hidden = true; card.innerHTML = ''; return; }
+  const txUrl = `https://basescan.org/tx/${state.lastMintHash}`;
+  card.hidden = false;
+  card.innerHTML = `
+    <div class="success-kicker">Mint complete ✦</div>
+    <h2>Cast NFT minted on Base</h2>
+    <p>@${escapeHtml(state.author || 'caster')} · ${escapeHtml(formatTxHash(state.lastMintHash))}</p>
+    <div class="success-actions">
+      <a class="mini-link" href="${txUrl}" target="_blank" rel="noopener noreferrer">View on Basescan</a>
+      <button id="posterBtn" class="mini-link" type="button">Create result poster</button>
+      <button id="mintAnotherBtn" class="mini-link subtle" type="button">Mint another cast</button>
+    </div>
+    ${state.posterUrl ? `<img class="poster-preview" src="${state.posterUrl}" alt="CastMint result poster preview" />` : ''}
+  `;
+  document.getElementById('posterBtn')?.addEventListener('click', createResultPoster);
+  document.getElementById('mintAnotherBtn')?.addEventListener('click', () => {
+    state.lastMintHash = '';
+    state.posterUrl = '';
+    setStatus('Ready for another cast URL.');
+    renderPreview();
+  });
+}
+
+function renderHistory() {
+  const history = document.getElementById('historyPanel');
+  if (!history) return;
+  if (!state.history.length) {
+    history.innerHTML = '<div class="history-empty">Local mint history will appear here after a successful mint.</div>';
+    return;
+  }
+  history.innerHTML = state.history.map((item) => `
+    <article class="history-item">
+      <div><strong>@${escapeHtml(item.author)}</strong><span>${escapeHtml(shortText(item.castText, 70))}</span></div>
+      <a href="https://basescan.org/tx/${item.txHash}" target="_blank" rel="noopener noreferrer">${escapeHtml(formatTxHash(item.txHash))}</a>
+    </article>
+  `).join('');
 }
 
 function syncInputs() {
@@ -182,9 +326,17 @@ function syncShareButton() {
   shareBtn.disabled = !state.lastMintHash || state.minting;
 }
 
+function syncMiniAppButton() {
+  const addBtn = document.getElementById('addMiniAppBtn') as HTMLButtonElement | null;
+  if (!addBtn) return;
+  addBtn.disabled = !state.addMiniAppAvailable;
+  addBtn.textContent = state.addMiniAppAvailable ? 'Add Mini App' : 'Mini App ready';
+}
+
 function syncActionButtons() {
   syncMintButton();
   syncShareButton();
+  syncMiniAppButton();
 }
 
 function setStatus(message: string) {
@@ -218,6 +370,34 @@ async function shareMintSuccess() {
   }
 }
 
+async function createResultPoster() {
+  if (!state.lastMintHash) { setStatus('Mint dulu sebelum membuat result poster.'); return; }
+  const item = state.history.find((entry) => entry.txHash === state.lastMintHash) || createMintHistoryItem({
+    castText: state.castText,
+    author: state.author,
+    castUrl: state.castUrl,
+    txHash: state.lastMintHash,
+    style: state.previewStyle,
+  });
+  state.posterUrl = posterDataUrl(item);
+  renderSuccessCard();
+  setStatus('Result poster generated locally. Long-press/save image, then share it anywhere.');
+}
+
+async function addMiniApp() {
+  try {
+    setStatus('Opening Farcaster Mini App save prompt…');
+    const actions = sdk.actions as unknown as { addMiniApp?: () => Promise<void>; addFrame?: () => Promise<void> };
+    if (typeof actions.addMiniApp === 'function') await actions.addMiniApp();
+    else if (typeof actions.addFrame === 'function') await actions.addFrame();
+    else throw new Error('Add Mini App action unavailable');
+    setStatus('Mini App prompt opened.');
+  } catch (err) {
+    console.warn('Add Mini App unavailable:', err);
+    setStatus('Add Mini App hanya tersedia saat dibuka di Farcaster client.');
+  }
+}
+
 async function fetchJson(url: string) {
   const response = await fetch(url, { headers: { Accept: 'application/json' } });
   if (!response.ok) throw new Error(`HTTP ${response.status}`);
@@ -233,7 +413,7 @@ async function fetchLocalCastApi(normalizedUrl: string) {
     const directText = payload.text?.trim();
     if (directText) return { text: directText, author: payload.author?.trim() || 'caster' };
     const nestedText = payload.cast?.text?.trim();
-    if (nestedText) {
+    if (nestedText && payload.cast) {
       const nestedAuthor = typeof payload.cast.author === 'string'
         ? payload.cast.author
         : payload.cast.author?.username || payload.cast.author?.displayName;
@@ -344,7 +524,7 @@ async function mintCastNft() {
     const data = encodeFunctionData({
       abi: MINT_ABI,
       functionName: MINT_FUNCTION_NAME,
-      args: [account, tokenUri],
+      args: [account as `0x${string}`, tokenUri],
     });
 
     setStatus('Confirm mint transaction in your wallet…');
@@ -359,7 +539,10 @@ async function mintCastNft() {
     }) as string;
 
     state.lastMintHash = hash;
-    setStatus(`Mint success on Base: ${hash.slice(0, 10)}…${hash.slice(-6)}. Share button unlocked.`);
+    state.posterUrl = '';
+    addMintHistoryItem(hash);
+    renderPreview();
+    setStatus(`Mint success on Base: ${formatTxHash(hash)}. Success card, history, and share unlocked.`);
   } catch (err) {
     console.warn('Mint failed:', err);
     const message = err instanceof Error ? err.message : 'Wallet rejected or transaction failed';
@@ -399,13 +582,18 @@ function renderApp() {
           <label><span>Cast URL</span><input id="castUrl" inputmode="url" autocomplete="off" placeholder="https://warpcast.com/username/0x..." /></label>
           <button id="generateBtn" class="primary-btn" type="submit">Generate NFT Preview</button>
           <button id="mintBtn" class="mint-btn" type="button">${getMintButtonLabel()}</button>
+          <div class="mini-profile" id="miniProfile">${state.detectedUser ? `Detected Farcaster user: @${escapeHtml(state.detectedUser)}` : 'Open in Farcaster for auto user detection.'}</div>
+          <div class="style-picker" id="stylePicker"></div>
           <button id="shareBtn" class="share-btn" type="button" hidden>Share minted NFT</button>
+          <button id="addMiniAppBtn" class="ghost-btn add-mini-btn" type="button">Add Mini App</button>
+          <section id="successCard" class="success-card" hidden></section>
+          <section class="history-card"><div class="section-title">Local mint history</div><div id="historyPanel"></div></section>
           <div id="metadataPanel" class="metadata-panel"></div><div id="status" class="status">${escapeHtml(state.status)}</div>
         </form>
       </section>
     </main>`;
 
-  syncInputs(); renderPreview(); syncActionButtons(); bindEvents();
+  syncInputs(); renderStylePicker(); renderPreview(); syncActionButtons(); bindEvents();
 }
 
 function bindEvents() {
@@ -413,11 +601,13 @@ function bindEvents() {
   const urlInput = document.getElementById('castUrl') as HTMLInputElement | null;
   const mintBtn = document.getElementById('mintBtn') as HTMLButtonElement | null;
   const shareBtn = document.getElementById('shareBtn') as HTMLButtonElement | null;
+  const addMiniAppBtn = document.getElementById('addMiniAppBtn') as HTMLButtonElement | null;
   const closeBtn = document.getElementById('closeBtn') as HTMLButtonElement | null;
 
   const updateFromInputs = () => {
     state.castUrl = normalizeCastUrl(urlInput?.value || '');
     state.lastMintHash = '';
+    state.posterUrl = '';
     renderPreview();
     syncActionButtons();
   };
@@ -428,6 +618,7 @@ function bindEvents() {
     const normalizedUrl = normalizeCastUrl(rawUrl);
     state.castUrl = normalizedUrl;
     state.lastMintHash = '';
+    state.posterUrl = '';
     if (!normalizedUrl) { setStatus('Ready to transform a cast into an NFT concept.'); return; }
 
     const fallbackAuthor = extractCastAuthorFromUrl(normalizedUrl);
@@ -462,6 +653,7 @@ function bindEvents() {
   form?.addEventListener('submit', (event) => { event.preventDefault(); resolveUrlInput(); });
   mintBtn?.addEventListener('click', mintCastNft);
   shareBtn?.addEventListener('click', shareMintSuccess);
+  addMiniAppBtn?.addEventListener('click', addMiniApp);
   closeBtn?.addEventListener('click', async () => {
     try { setStatus('Closing mini app…'); await sdk.actions.close(); }
     catch { if (window.history.length > 1) window.history.back(); else window.location.href = 'https://farcaster.xyz/'; }
@@ -469,6 +661,16 @@ function bindEvents() {
 }
 
 async function initMiniApp() {
+  state.history = readMintHistory();
+  try {
+    const context = await sdk.context;
+    const user = context?.user;
+    state.detectedUser = user?.username || user?.displayName || '';
+    state.isMiniApp = Boolean(context?.client || user);
+    state.addMiniAppAvailable = true;
+  } catch (err) {
+    console.warn('Farcaster context unavailable outside Mini App:', err);
+  }
   renderApp();
   void checkMintCompatibility();
   try { sdk.back.onback = async () => { try { await sdk.actions.close(); } catch { if (window.history.length > 1) window.history.back(); } }; await sdk.back.show(); }

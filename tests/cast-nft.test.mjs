@@ -2,6 +2,10 @@ import assert from 'node:assert/strict';
 import {
   buildCastMintTokenUri,
   buildCastNftMetadata,
+  CASTMINT_PREVIEW_STYLES,
+  createMintHistoryItem,
+  formatTxHash,
+  getPreviewStyle,
   isValidEvmAddress,
   extractCastAuthorFromUrl,
   findCastInApiResponse,
@@ -45,6 +49,27 @@ assert.equal(decodedMetadata.attributes.some((item) => item.trait_type === 'Chai
 assert.equal(isValidEvmAddress('0x0000000000000000000000000000000000000001'), true, 'valid EVM address should pass');
 assert.equal(isValidEvmAddress('0x123'), false, 'short EVM address should fail');
 assert.equal(isValidEvmAddress('not-an-address'), false, 'non-address should fail');
+
+assert.deepEqual(
+  CASTMINT_PREVIEW_STYLES.map((style) => style.id),
+  ['neon', 'poster', 'minimal'],
+  'preview styles should expose the three supported premium layouts',
+);
+assert.equal(getPreviewStyle('poster'), 'poster', 'known preview style should be accepted');
+assert.equal(getPreviewStyle('unknown'), 'neon', 'unknown preview style should fall back safely');
+assert.equal(formatTxHash('0x1234567890abcdef1234567890abcdef12345678'), '0x12345678…345678', 'long tx hashes should be shortened for UI cards');
+const historyItem = createMintHistoryItem({
+  castText: '  Minted   cast text  ',
+  author: '@gyoo',
+  castUrl: 'warpcast.com/gyoo/0x1234',
+  txHash: '0x1234567890abcdef1234567890abcdef12345678',
+  mintedAt: '2026-05-04T00:00:00.000Z',
+  style: 'minimal',
+});
+assert.equal(historyItem.castUrl, 'https://warpcast.com/gyoo/0x1234', 'history should normalize cast URL');
+assert.equal(historyItem.author, 'gyoo', 'history should normalize author handle');
+assert.equal(historyItem.castText, 'Minted cast text', 'history should compact cast text');
+assert.equal(historyItem.style, 'minimal', 'history should preserve selected style');
 
 assert.equal(
   normalizeCastUrl('warpcast.com/dwr.eth/0x55c2b3a9'),

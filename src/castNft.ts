@@ -17,6 +17,44 @@ export type CastLookupResult = {
   author: string;
 };
 
+export type CastMintPreviewStyle = 'neon' | 'poster' | 'minimal';
+
+export const CASTMINT_PREVIEW_STYLES: Array<{ id: CastMintPreviewStyle; label: string; description: string }> = [
+  { id: 'neon', label: 'Neon', description: 'Animated premium card with Base glow.' },
+  { id: 'poster', label: 'Poster', description: 'Bold result-poster layout for sharing.' },
+  { id: 'minimal', label: 'Clean', description: 'Minimal collectible card with calm contrast.' },
+];
+
+export type CastMintHistoryItem = {
+  castUrl: string;
+  author: string;
+  castText: string;
+  txHash: string;
+  mintedAt: string;
+  style: CastMintPreviewStyle;
+};
+
+export function getPreviewStyle(value = ''): CastMintPreviewStyle {
+  return CASTMINT_PREVIEW_STYLES.some((item) => item.id === value) ? value as CastMintPreviewStyle : 'neon';
+}
+
+export function formatTxHash(txHash = ''): string {
+  const clean = txHash.trim();
+  if (clean.length <= 18) return clean;
+  return `${clean.slice(0, 10)}…${clean.slice(-6)}`;
+}
+
+export function createMintHistoryItem(input: CastNftInput & { txHash: string; mintedAt?: string; style?: string }): CastMintHistoryItem {
+  return {
+    castUrl: normalizeCastUrl(input.castUrl || ''),
+    author: input.author.trim().replace(/^@/, '') || 'caster',
+    castText: input.castText.trim().replace(/\s+/g, ' '),
+    txHash: input.txHash.trim(),
+    mintedAt: input.mintedAt || new Date().toISOString(),
+    style: getPreviewStyle(input.style),
+  };
+}
+
 type PublicCast = {
   hash?: string;
   castHash?: string;
