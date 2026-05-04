@@ -54,6 +54,7 @@ const state = {
   castUrl: '',
   status: 'Ready to transform a cast into an NFT concept.',
   minting: false,
+  lastMintHash: '',
 };
 
 let castLookupRequest = 0;
@@ -102,7 +103,7 @@ async function readMintPrice() {
   } catch (err) {
     console.warn('Mint price read skipped:', err);
   } finally {
-    syncMintButton();
+    syncActionButtons();
   }
   return mintPriceWei;
 }
@@ -133,7 +134,7 @@ async function checkMintCompatibility() {
   } catch (err) {
     console.warn('Mint compatibility check skipped:', err);
   } finally {
-    syncMintButton();
+    syncActionButtons();
   }
   return !mintCompatibilityWarning;
 }
@@ -174,11 +175,47 @@ function syncMintButton() {
   mintBtn.disabled = state.minting;
 }
 
+function syncShareButton() {
+  const shareBtn = document.getElementById('shareBtn') as HTMLButtonElement | null;
+  if (!shareBtn) return;
+  shareBtn.hidden = !state.lastMintHash;
+  shareBtn.disabled = !state.lastMintHash || state.minting;
+}
+
+function syncActionButtons() {
+  syncMintButton();
+  syncShareButton();
+}
+
 function setStatus(message: string) {
   state.status = message;
   const status = document.getElementById('status');
   if (status) status.textContent = message;
-  syncMintButton();
+  syncActionButtons();
+}
+
+async function shareMintSuccess() {
+  if (!state.lastMintHash) {
+    setStatus('Mint dulu, setelah berhasil tombol share akan aktif.');
+    return;
+  }
+
+  const appUrl = `${window.location.origin}/?v=9`;
+  const castLine = state.castUrl ? `Original cast: ${state.castUrl}\n` : '';
+  const txLine = `Base tx: https://basescan.org/tx/${state.lastMintHash}`;
+  const text = `Just minted a Farcaster cast as an NFT on Base with CastMint ✦\n\n@${state.author || 'caster'} → collectible onchain.\n${castLine}${txLine}\n\nMint yours:`;
+
+  setStatus('Opening Farcaster share composer…');
+  try {
+    await sdk.actions.composeCast({ text, embeds: [appUrl] });
+    setStatus('Share composer opened. Review and cast when ready.');
+  } catch (err) {
+    console.warn('Native share failed, using fallback:', err);
+    const fallbackText = `${text}\n${appUrl}`;
+    try { await navigator.clipboard.writeText(fallbackText); } catch { /* optional */ }
+    window.open(`https://warpcast.com/~/compose?text=${encodeURIComponent(fallbackText)}`, '_blank', 'noopener,noreferrer');
+    setStatus('Share text copied. Warpcast compose opened as fallback.');
+  }
 }
 
 async function fetchJson(url: string) {
@@ -292,6 +329,7 @@ async function mintCastNft() {
   }
 
   state.minting = true;
+  state.lastMintHash = '';
   setStatus('Connecting wallet…');
   try {
     const provider = await getEthereumProvider();
@@ -320,15 +358,15 @@ async function mintCastNft() {
       }],
     }) as string;
 
-    setStatus(`Mint transaction sent on Base: ${hash.slice(0, 10)}…${hash.slice(-6)}`);
-    try { await sdk.actions.openUrl({ url: `https://basescan.org/tx/${hash}` }); } catch { /* optional */ }
+    state.lastMintHash = hash;
+    setStatus(`Mint success on Base: ${hash.slice(0, 10)}…${hash.slice(-6)}. Share button unlocked.`);
   } catch (err) {
     console.warn('Mint failed:', err);
     const message = err instanceof Error ? err.message : 'Wallet rejected or transaction failed';
     setStatus(`Mint failed: ${message}`);
   } finally {
     state.minting = false;
-    syncMintButton();
+    syncActionButtons();
   }
 }
 
@@ -348,6 +386,7 @@ function renderApp() {
           <h1>Paste cast URL. Mint it on Base.</h1>
           <p>No manual text or creator fields. CastMint reads the original cast and prepares a wallet mint with embedded onchain metadata.</p>
         </div>
+        <div class="hero-glowline" aria-hidden="true"></div>
         <div class="hero-hint">
           <span>01</span><strong>Paste URL</strong>
           <span>02</span><strong>Auto-read cast</strong>
@@ -360,23 +399,27 @@ function renderApp() {
           <label><span>Cast URL</span><input id="castUrl" inputmode="url" autocomplete="off" placeholder="https://warpcast.com/username/0x..." /></label>
           <button id="generateBtn" class="primary-btn" type="submit">Generate NFT Preview</button>
           <button id="mintBtn" class="mint-btn" type="button">${getMintButtonLabel()}</button>
+          <button id="shareBtn" class="share-btn" type="button" hidden>Share minted NFT</button>
           <div id="metadataPanel" class="metadata-panel"></div><div id="status" class="status">${escapeHtml(state.status)}</div>
         </form>
       </section>
     </main>`;
 
-  syncInputs(); renderPreview(); syncMintButton(); bindEvents();
+  syncInputs(); renderPreview(); syncActionButtons(); bindEvents();
 }
 
 function bindEvents() {
   const form = document.getElementById('castForm') as HTMLFormElement | null;
   const urlInput = document.getElementById('castUrl') as HTMLInputElement | null;
   const mintBtn = document.getElementById('mintBtn') as HTMLButtonElement | null;
+  const shareBtn = document.getElementById('shareBtn') as HTMLButtonElement | null;
   const closeBtn = document.getElementById('closeBtn') as HTMLButtonElement | null;
 
   const updateFromInputs = () => {
     state.castUrl = normalizeCastUrl(urlInput?.value || '');
+    state.lastMintHash = '';
     renderPreview();
+    syncActionButtons();
   };
 
   const resolveUrlInput = async () => {
@@ -384,6 +427,7 @@ function bindEvents() {
     const rawUrl = urlInput?.value.trim() || '';
     const normalizedUrl = normalizeCastUrl(rawUrl);
     state.castUrl = normalizedUrl;
+    state.lastMintHash = '';
     if (!normalizedUrl) { setStatus('Ready to transform a cast into an NFT concept.'); return; }
 
     const fallbackAuthor = extractCastAuthorFromUrl(normalizedUrl);
@@ -417,6 +461,7 @@ function bindEvents() {
 
   form?.addEventListener('submit', (event) => { event.preventDefault(); resolveUrlInput(); });
   mintBtn?.addEventListener('click', mintCastNft);
+  shareBtn?.addEventListener('click', shareMintSuccess);
   closeBtn?.addEventListener('click', async () => {
     try { setStatus('Closing mini app…'); await sdk.actions.close(); }
     catch { if (window.history.length > 1) window.history.back(); else window.location.href = 'https://farcaster.xyz/'; }
