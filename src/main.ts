@@ -1,5 +1,5 @@
 import { sdk } from '@farcaster/miniapp-sdk';
-import { encodeFunctionData, formatEther } from 'viem';
+import { encodeFunctionData, formatEther, keccak256, toBytes } from 'viem';
 import {
   buildCastMintTokenUri,
   buildCastNftMetadata,
@@ -15,7 +15,8 @@ const SAMPLE_CAST = 'Paste a Farcaster cast URL to generate the NFT preview.';
 const PUBLIC_FARCASTER_API = 'https://api.farcaster.xyz/v2';
 const BASE_CHAIN_ID_HEX = '0x2105';
 const MINT_PRICE_WEI = 0n;
-const MINT_CONTRACT_ADDRESS = import.meta.env.VITE_CASTMINT_CONTRACT_ADDRESS || '';
+const DEFAULT_MINT_CONTRACT_ADDRESS = '0xd70309f170C88012727A725079f37D621Cb679c3';
+const MINT_CONTRACT_ADDRESS = import.meta.env.VITE_CASTMINT_CONTRACT_ADDRESS || DEFAULT_MINT_CONTRACT_ADDRESS;
 const MINT_FUNCTION_NAME = import.meta.env.VITE_CASTMINT_FUNCTION_NAME || 'mintTo';
 const MINT_ABI = [
   {
@@ -29,6 +30,9 @@ const MINT_ABI = [
     outputs: [],
   },
 ] as const;
+const EXPECTED_MINT_SELECTOR = keccak256(toBytes(`${MINT_FUNCTION_NAME}(address,string)`)).slice(2, 10).toLowerCase();
+let mintCompatibilityChecked = false;
+let mintCompatibilityWarning = '';
 
 type EthereumProvider = {
   request: (args: { method: string; params?: unknown[] | Record<string, unknown> }) => Promise<unknown>;
@@ -60,7 +64,38 @@ function shortAddress(seed: string) {
 function getMintButtonLabel() {
   if (state.minting) return 'Minting on Base…';
   if (!isValidEvmAddress(MINT_CONTRACT_ADDRESS)) return 'Mint Contract Needed';
+  if (mintCompatibilityWarning) return 'Mint ABI Needed';
   return MINT_PRICE_WEI > 0n ? `Mint on Base · ${formatEther(MINT_PRICE_WEI)} ETH` : 'Mint on Base';
+}
+
+async function checkMintCompatibility() {
+  if (mintCompatibilityChecked || !isValidEvmAddress(MINT_CONTRACT_ADDRESS)) return !mintCompatibilityWarning;
+  mintCompatibilityChecked = true;
+  try {
+    const response = await fetch('https://base-rpc.publicnode.com', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        jsonrpc: '2.0',
+        id: 1,
+        method: 'eth_getCode',
+        params: [MINT_CONTRACT_ADDRESS, 'latest'],
+      }),
+    });
+    const payload = await response.json();
+    const code = String(payload?.result || '').toLowerCase();
+    if (code && code !== '0x' && !code.includes(EXPECTED_MINT_SELECTOR)) {
+      mintCompatibilityWarning = `Mint ABI mismatch: contract ${MINT_CONTRACT_ADDRESS} does not expose ${MINT_FUNCTION_NAME}(address,string).`;
+      setStatus('Mint contract found, but ABI belum cocok. Need actual mint function/source before live mint.');
+      renderPreview();
+      return false;
+    }
+  } catch (err) {
+    console.warn('Mint compatibility check skipped:', err);
+  } finally {
+    syncMintButton();
+  }
+  return !mintCompatibilityWarning;
 }
 
 function renderPreview() {
@@ -88,7 +123,7 @@ function renderPreview() {
     <div class="meta-row"><span>Name</span><strong>${escapeHtml(metadata.name)}</strong></div>
     <div class="meta-row"><span>Source</span><strong>Farcaster Cast</strong></div>
     <div class="meta-row"><span>Seed</span><strong>${seed}</strong></div>
-    <div class="meta-row"><span>Mint</span><strong>${isValidEvmAddress(MINT_CONTRACT_ADDRESS) ? 'Ready on Base' : 'Set VITE_CASTMINT_CONTRACT_ADDRESS'}</strong></div>
+    <div class="meta-row"><span>Mint</span><strong>${mintCompatibilityWarning ? 'ABI needed' : 'Ready on Base'}</strong></div>
   `;
 }
 
@@ -212,7 +247,12 @@ async function mintCastNft() {
     return;
   }
   if (!isValidEvmAddress(MINT_CONTRACT_ADDRESS)) {
-    setStatus('Mint belum bisa dikirim: set VITE_CASTMINT_CONTRACT_ADDRESS ke alamat ERC-721 contract di Base.');
+    setStatus('Mint belum bisa dikirim: alamat contract Base belum valid.');
+    return;
+  }
+  const isMintCompatible = await checkMintCompatibility();
+  if (!isMintCompatible) {
+    setStatus('Mint ditahan: contract Base sudah ditemukan, tapi ABI mint belum cocok. Need actual mint function/source first.');
     return;
   }
 
@@ -350,6 +390,7 @@ function bindEvents() {
 
 async function initMiniApp() {
   renderApp();
+  void checkMintCompatibility();
   try { sdk.back.onback = async () => { try { await sdk.actions.close(); } catch { if (window.history.length > 1) window.history.back(); } }; await sdk.back.show(); }
   catch (err) { console.warn('Farcaster back handling unavailable outside Mini App:', err); }
   try { await sdk.actions.ready(); console.log('CastMint ready'); }
