@@ -1,57 +1,77 @@
-import { SDK } from '@farcaster/sdk';
+import { sdk } from '@farcaster/miniapp-sdk';
 
-async function main() {
-  // Initialize SDK
-  const sdk = new SDK({
-    domain: window.location.hostname,
-    secure: window.location.protocol === 'https:'
+const DEFAULT_CAST = 'Hello from CastPoster Mini App! 🚀';
+
+function renderApp() {
+  const app = document.getElementById('app');
+  if (!app) return;
+
+  app.innerHTML = `
+    <main class="shell">
+      <section class="hero-card">
+        <div class="badge">Farcaster Mini App</div>
+        <h1>🎯 CastPoster</h1>
+        <p>Compose a clean cast directly inside Farcaster with native Mini App navigation.</p>
+        <button id="composeBtn" class="primary-btn">✍️ Compose Cast</button>
+        <button id="closeBtn" class="ghost-btn">← Back to Farcaster</button>
+        <div id="status" class="status">Ready</div>
+      </section>
+    </main>
+  `;
+
+  const composeBtn = document.getElementById('composeBtn') as HTMLButtonElement | null;
+  const closeBtn = document.getElementById('closeBtn') as HTMLButtonElement | null;
+  const status = document.getElementById('status');
+
+  composeBtn?.addEventListener('click', async () => {
+    try {
+      if (status) status.textContent = 'Opening composer…';
+      await sdk.actions.composeCast({ text: DEFAULT_CAST });
+      if (status) status.textContent = 'Composer opened';
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      if (status) status.textContent = `Composer unavailable: ${message}`;
+    }
   });
 
-  try {
-    // CRITICAL: Call ready() to hide splash screen
-    await sdk.actions.ready();
-    console.log('CastPoster ready');
-
-    // Setup UI
-    const app = document.getElementById('app');
-    if (app) {
-      app.innerHTML = `
-        <div style="padding: 20px; font-family: system-ui;">
-          <h1>🎯 CastPoster</h1>
-          <p>Ready to post! Open the composer to share your thoughts.</p>
-          <button id="composeBtn" style="padding: 12px 24px; font-size: 16px; cursor: pointer;">
-            ✍️ Compose Cast
-          </button>
-          <div id="status" style="margin-top: 20px; color: #666;"></div>
-        </div>
-      `;
-
-      const composeBtn = document.getElementById('composeBtn');
-      const status = document.getElementById('status');
-
-      if (composeBtn) {
-        composeBtn.addEventListener('click', async () => {
-          try {
-            status.textContent = 'Opening composer...';
-            await sdk.actions.composeCast({
-              text: 'Hello from CastPoster Mini App! 🚀'
-            });
-            status.textContent = 'Cast composed!';
-          } catch (err) {
-            status.textContent = `Error: ${err.message}`;
-          }
-        });
+  closeBtn?.addEventListener('click', async () => {
+    try {
+      if (status) status.textContent = 'Closing mini app…';
+      await sdk.actions.close();
+    } catch (err) {
+      if (window.history.length > 1) {
+        window.history.back();
+      } else {
+        window.location.href = 'https://farcaster.xyz/';
       }
     }
-  } catch (error) {
-    console.error('SDK Error:', error);
-    document.getElementById('app').innerHTML = `
-      <div style="padding: 20px; color: red;">
-        <h1>Error</h1>
-        <p>${error.message}</p>
-      </div>
-    `;
+  });
+}
+
+async function initMiniApp() {
+  renderApp();
+
+  try {
+    // Use Farcaster's native back button and close the mini app instead of
+    // falling back to the previous browser history entry.
+    sdk.back.onback = async () => {
+      try {
+        await sdk.actions.close();
+      } catch (err) {
+        if (window.history.length > 1) window.history.back();
+      }
+    };
+    await sdk.back.show();
+  } catch (err) {
+    console.warn('Farcaster back handling unavailable outside Mini App:', err);
+  }
+
+  try {
+    await sdk.actions.ready();
+    console.log('CastPoster ready');
+  } catch (err) {
+    console.warn('ready() failed outside Farcaster Mini App:', err);
   }
 }
 
-main();
+initMiniApp();
