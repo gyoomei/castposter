@@ -1,21 +1,45 @@
 import { sdk } from '@farcaster/miniapp-sdk';
+import { encodeFunctionData, formatEther } from 'viem';
 import {
+  buildCastMintTokenUri,
   buildCastNftMetadata,
   extractCastAuthorFromUrl,
   findCastInApiResponse,
   getCastHashFromUrl,
   getCastNftSeed,
+  isValidEvmAddress,
   normalizeCastUrl,
 } from './castNft';
 
 const SAMPLE_CAST = 'Paste a Farcaster cast URL to generate the NFT preview.';
 const PUBLIC_FARCASTER_API = 'https://api.farcaster.xyz/v2';
+const BASE_CHAIN_ID_HEX = '0x2105';
+const MINT_PRICE_WEI = 0n;
+const MINT_CONTRACT_ADDRESS = import.meta.env.VITE_CASTMINT_CONTRACT_ADDRESS || '';
+const MINT_FUNCTION_NAME = import.meta.env.VITE_CASTMINT_FUNCTION_NAME || 'mintTo';
+const MINT_ABI = [
+  {
+    type: 'function',
+    name: MINT_FUNCTION_NAME,
+    stateMutability: MINT_PRICE_WEI > 0n ? 'payable' : 'nonpayable',
+    inputs: [
+      { name: 'to', type: 'address' },
+      { name: 'tokenURI', type: 'string' },
+    ],
+    outputs: [],
+  },
+] as const;
+
+type EthereumProvider = {
+  request: (args: { method: string; params?: unknown[] | Record<string, unknown> }) => Promise<unknown>;
+};
 
 const state = {
   castText: SAMPLE_CAST,
   author: 'gyoo',
   castUrl: '',
   status: 'Ready to transform a cast into an NFT concept.',
+  minting: false,
 };
 
 let castLookupRequest = 0;
@@ -31,6 +55,12 @@ function escapeHtml(value: string) {
 
 function shortAddress(seed: string) {
   return `${seed.slice(0, 4).toUpperCase()}-${seed.slice(4).toUpperCase()}`;
+}
+
+function getMintButtonLabel() {
+  if (state.minting) return 'Minting on Base…';
+  if (!isValidEvmAddress(MINT_CONTRACT_ADDRESS)) return 'Mint Contract Needed';
+  return MINT_PRICE_WEI > 0n ? `Mint on Base · ${formatEther(MINT_PRICE_WEI)} ETH` : 'Mint on Base';
 }
 
 function renderPreview() {
@@ -58,6 +88,7 @@ function renderPreview() {
     <div class="meta-row"><span>Name</span><strong>${escapeHtml(metadata.name)}</strong></div>
     <div class="meta-row"><span>Source</span><strong>Farcaster Cast</strong></div>
     <div class="meta-row"><span>Seed</span><strong>${seed}</strong></div>
+    <div class="meta-row"><span>Mint</span><strong>${isValidEvmAddress(MINT_CONTRACT_ADDRESS) ? 'Ready on Base' : 'Set VITE_CASTMINT_CONTRACT_ADDRESS'}</strong></div>
   `;
 }
 
@@ -66,10 +97,18 @@ function syncInputs() {
   if (urlInput) urlInput.value = state.castUrl;
 }
 
+function syncMintButton() {
+  const mintBtn = document.getElementById('mintBtn') as HTMLButtonElement | null;
+  if (!mintBtn) return;
+  mintBtn.textContent = getMintButtonLabel();
+  mintBtn.disabled = state.minting;
+}
+
 function setStatus(message: string) {
   state.status = message;
   const status = document.getElementById('status');
   if (status) status.textContent = message;
+  syncMintButton();
 }
 
 async function fetchJson(url: string) {
@@ -80,21 +119,21 @@ async function fetchJson(url: string) {
 
 async function fetchLocalCastApi(normalizedUrl: string) {
   const localApiUrl = `${window.location.origin}/api/cast?url=${encodeURIComponent(normalizedUrl)}`;
-    const response = await fetch(localApiUrl, { headers: { Accept: 'application/json' } });
-    const contentType = response.headers.get('content-type') || '';
-    if (response.ok && contentType.includes('application/json')) {
-      const payload = (await response.json()) as { text?: string; author?: string; cast?: { text?: string; author?: { username?: string; displayName?: string } | string } };
-      const directText = payload.text?.trim();
-      if (directText) return { text: directText, author: payload.author?.trim() || 'caster' };
-      const nestedText = payload.cast?.text?.trim();
-      if (nestedText) {
-        const nestedAuthor = typeof payload.cast.author === 'string'
-          ? payload.cast.author
-          : payload.cast.author?.username || payload.cast.author?.displayName;
-        return { text: nestedText, author: nestedAuthor?.trim() || 'caster' };
-      }
+  const response = await fetch(localApiUrl, { headers: { Accept: 'application/json' } });
+  const contentType = response.headers.get('content-type') || '';
+  if (response.ok && contentType.includes('application/json')) {
+    const payload = (await response.json()) as { text?: string; author?: string; cast?: { text?: string; author?: { username?: string; displayName?: string } | string } };
+    const directText = payload.text?.trim();
+    if (directText) return { text: directText, author: payload.author?.trim() || 'caster' };
+    const nestedText = payload.cast?.text?.trim();
+    if (nestedText) {
+      const nestedAuthor = typeof payload.cast.author === 'string'
+        ? payload.cast.author
+        : payload.cast.author?.username || payload.cast.author?.displayName;
+      return { text: nestedText, author: nestedAuthor?.trim() || 'caster' };
     }
-    return null;
+  }
+  return null;
 }
 
 async function resolveCastFromUrl(rawUrl: string) {
@@ -127,6 +166,97 @@ async function resolveCastFromUrl(rawUrl: string) {
   return null;
 }
 
+async function getEthereumProvider(): Promise<EthereumProvider | null> {
+  try {
+    const miniProvider = await sdk.wallet.getEthereumProvider();
+    if (miniProvider) return miniProvider as unknown as EthereumProvider;
+  } catch (err) {
+    console.warn('Farcaster wallet provider unavailable:', err);
+  }
+
+  const browserProvider = (window as unknown as { ethereum?: EthereumProvider }).ethereum;
+  return browserProvider || null;
+}
+
+async function ensureBaseNetwork(provider: EthereumProvider) {
+  const currentChainId = await provider.request({ method: 'eth_chainId' });
+  if (typeof currentChainId === 'string' && currentChainId.toLowerCase() === BASE_CHAIN_ID_HEX) return;
+
+  try {
+    await provider.request({ method: 'wallet_switchEthereumChain', params: [{ chainId: BASE_CHAIN_ID_HEX }] });
+  } catch (switchError) {
+    const errorCode = (switchError as { code?: number }).code;
+    if (errorCode !== 4902) throw switchError;
+    await provider.request({
+      method: 'wallet_addEthereumChain',
+      params: [{
+        chainId: BASE_CHAIN_ID_HEX,
+        chainName: 'Base',
+        nativeCurrency: { name: 'Ether', symbol: 'ETH', decimals: 18 },
+        rpcUrls: ['https://mainnet.base.org'],
+        blockExplorerUrls: ['https://basescan.org'],
+      }],
+    });
+  }
+}
+
+async function mintCastNft() {
+  if (state.minting) return;
+  const normalizedUrl = normalizeCastUrl(state.castUrl);
+  if (!normalizedUrl || !getCastHashFromUrl(normalizedUrl)) {
+    setStatus('Paste a valid Farcaster cast URL first, then mint.');
+    return;
+  }
+  if (state.castText === SAMPLE_CAST) {
+    setStatus('Load the original cast text first so the NFT metadata matches the cast.');
+    return;
+  }
+  if (!isValidEvmAddress(MINT_CONTRACT_ADDRESS)) {
+    setStatus('Mint belum bisa dikirim: set VITE_CASTMINT_CONTRACT_ADDRESS ke alamat ERC-721 contract di Base.');
+    return;
+  }
+
+  state.minting = true;
+  setStatus('Connecting wallet…');
+  try {
+    const provider = await getEthereumProvider();
+    if (!provider) throw new Error('No Ethereum wallet provider found');
+
+    await ensureBaseNetwork(provider);
+    const accounts = await provider.request({ method: 'eth_requestAccounts' }) as string[];
+    const account = accounts?.[0];
+    if (!isValidEvmAddress(account || '')) throw new Error('Wallet account unavailable');
+
+    const tokenUri = buildCastMintTokenUri({ castText: state.castText, author: state.author, castUrl: normalizedUrl });
+    const data = encodeFunctionData({
+      abi: MINT_ABI,
+      functionName: MINT_FUNCTION_NAME,
+      args: [account, tokenUri],
+    });
+
+    setStatus('Confirm mint transaction in your wallet…');
+    const hash = await provider.request({
+      method: 'eth_sendTransaction',
+      params: [{
+        from: account,
+        to: MINT_CONTRACT_ADDRESS,
+        data,
+        value: MINT_PRICE_WEI > 0n ? `0x${MINT_PRICE_WEI.toString(16)}` : '0x0',
+      }],
+    }) as string;
+
+    setStatus(`Mint transaction sent on Base: ${hash.slice(0, 10)}…${hash.slice(-6)}`);
+    try { await sdk.actions.openUrl({ url: `https://basescan.org/tx/${hash}` }); } catch { /* optional */ }
+  } catch (err) {
+    console.warn('Mint failed:', err);
+    const message = err instanceof Error ? err.message : 'Wallet rejected or transaction failed';
+    setStatus(`Mint failed: ${message}`);
+  } finally {
+    state.minting = false;
+    syncMintButton();
+  }
+}
+
 function renderApp() {
   const app = document.getElementById('app');
   if (!app) return;
@@ -139,14 +269,14 @@ function renderApp() {
           <button id="closeBtn" class="icon-btn" aria-label="Back to Farcaster">←</button>
         </nav>
         <div class="hero-copy">
-          <div class="badge">Farcaster Mini App · Base NFT Concept</div>
-          <h1>Paste cast URL. Get NFT preview.</h1>
-          <p>No manual text or creator fields. CastMint reads the original cast and updates the animated NFT card automatically.</p>
+          <div class="badge">Farcaster Mini App · Base NFT Mint</div>
+          <h1>Paste cast URL. Mint it on Base.</h1>
+          <p>No manual text or creator fields. CastMint reads the original cast and prepares a wallet mint with embedded onchain metadata.</p>
         </div>
         <div class="hero-hint">
           <span>01</span><strong>Paste URL</strong>
           <span>02</span><strong>Auto-read cast</strong>
-          <span>03</span><strong>Preview NFT</strong>
+          <span>03</span><strong>Mint on Base</strong>
         </div>
       </section>
       <section class="workspace">
@@ -154,13 +284,13 @@ function renderApp() {
         <form id="castForm" class="control-card">
           <label><span>Cast URL</span><input id="castUrl" inputmode="url" autocomplete="off" placeholder="https://warpcast.com/username/0x..." /></label>
           <button id="generateBtn" class="primary-btn" type="submit">Generate NFT Preview</button>
-          <button id="mintBtn" class="mint-btn" type="button">Mint on Base Soon</button>
+          <button id="mintBtn" class="mint-btn" type="button">${getMintButtonLabel()}</button>
           <div id="metadataPanel" class="metadata-panel"></div><div id="status" class="status">${escapeHtml(state.status)}</div>
         </form>
       </section>
     </main>`;
 
-  syncInputs(); renderPreview(); bindEvents();
+  syncInputs(); renderPreview(); syncMintButton(); bindEvents();
 }
 
 function bindEvents() {
@@ -198,7 +328,7 @@ function bindEvents() {
         state.castText = resolved.text;
         state.author = resolved.author || fallbackAuthor || state.author;
         state.castUrl = normalizedUrl;
-        syncInputs(); renderPreview(); setStatus('Cast text loaded from URL. NFT preview updated.');
+        syncInputs(); renderPreview(); setStatus('Cast text loaded from URL. Ready to mint on Base.');
       } else setStatus('Cast URL saved, but the public API could not find the original cast text.');
     } catch (err) {
       if (requestId !== castLookupRequest) return;
@@ -211,7 +341,7 @@ function bindEvents() {
   urlInput?.addEventListener('change', resolveUrlInput);
 
   form?.addEventListener('submit', (event) => { event.preventDefault(); resolveUrlInput(); });
-  mintBtn?.addEventListener('click', () => setStatus('Mint flow placeholder: next step is ERC-721 contract + IPFS metadata upload.'));
+  mintBtn?.addEventListener('click', mintCastNft);
   closeBtn?.addEventListener('click', async () => {
     try { setStatus('Closing mini app…'); await sdk.actions.close(); }
     catch { if (window.history.length > 1) window.history.back(); else window.location.href = 'https://farcaster.xyz/'; }

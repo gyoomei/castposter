@@ -1,6 +1,8 @@
 import assert from 'node:assert/strict';
 import {
+  buildCastMintTokenUri,
   buildCastNftMetadata,
+  isValidEvmAddress,
   extractCastAuthorFromUrl,
   findCastInApiResponse,
   getCastNftSeed,
@@ -23,9 +25,26 @@ assert.equal(metadata.description.includes(sample), true, 'description should in
 assert.equal(metadata.external_url, 'https://warpcast.com/gyoo/0x123');
 assert.deepEqual(
   metadata.attributes.map((item) => item.trait_type),
-  ['Source', 'Creator', 'Cast Seed'],
-  'metadata should include source, creator, and seed attributes',
+  ['Source', 'Creator', 'Cast Seed', 'Chain'],
+  'metadata should include source, creator, seed, and chain attributes',
 );
+
+
+const tokenUri = buildCastMintTokenUri({
+  castText: sample,
+  author: 'gyoo',
+  castUrl: 'warpcast.com/gyoo/0x123',
+});
+assert.equal(tokenUri.startsWith('data:application/json;base64,'), true, 'mint token URI should be an onchain data URI');
+const decodedMetadata = JSON.parse(Buffer.from(tokenUri.split(',')[1], 'base64').toString('utf8'));
+assert.equal(decodedMetadata.name, metadata.name, 'mint token URI should reuse CastMint metadata name');
+assert.equal(decodedMetadata.external_url, 'https://warpcast.com/gyoo/0x123', 'mint token URI should normalize source cast URL');
+assert.equal(decodedMetadata.image.startsWith('data:image/svg+xml;base64,'), true, 'mint token URI should include an embedded SVG image');
+assert.equal(decodedMetadata.attributes.some((item) => item.trait_type === 'Chain' && item.value === 'Base'), true, 'mint metadata should mark Base as chain');
+
+assert.equal(isValidEvmAddress('0x0000000000000000000000000000000000000001'), true, 'valid EVM address should pass');
+assert.equal(isValidEvmAddress('0x123'), false, 'short EVM address should fail');
+assert.equal(isValidEvmAddress('not-an-address'), false, 'non-address should fail');
 
 assert.equal(
   normalizeCastUrl('warpcast.com/dwr.eth/0x55c2b3a9'),
