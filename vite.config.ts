@@ -1,6 +1,7 @@
 import { defineConfig } from 'vite';
 
 export default defineConfig({
+  base: '/castposter/',
   root: '.',
   publicDir: 'public',
   server: {
