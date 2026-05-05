@@ -118,9 +118,9 @@
       position: absolute;
       inset: auto 22px 132px 22px;
       height: 1px;
-      background: linear-gradient(90deg, transparent, rgba(85,231,255,.72), rgba(255,91,215,.72), transparent);
-      box-shadow: 0 0 26px rgba(85,231,255,.35);
-      opacity: .75;
+      background: linear-gradient(90deg, transparent, rgba(85,231,255,.85), rgba(255,91,215,.85), rgba(255,209,102,.65), transparent);
+      box-shadow: 0 0 32px rgba(85,231,255,.45), 0 0 64px rgba(255,91,215,.22);
+      opacity: .9;
     }
 
     .topbar { display: flex; align-items: center; gap: 12px; position: relative; z-index: 1; }
@@ -211,7 +211,7 @@
       content: "";
       position: absolute;
       inset: -30%;
-      background: conic-gradient(from 0deg, transparent, rgba(85,231,255,.18), transparent, rgba(255,91,215,.16), transparent);
+      background: conic-gradient(from 0deg, transparent, rgba(85,231,255,.22), transparent, rgba(255,91,215,.20), transparent, rgba(255,209,102,.14), transparent);
       animation: spin 10s linear infinite;
     }
     .nft-orbit { position: absolute; inset: 0; pointer-events: none; }
@@ -237,24 +237,53 @@
       flex-direction: column;
       justify-content: space-between;
       background:
-        linear-gradient(160deg, rgba(255,255,255,.14), rgba(255,255,255,.04)),
-        radial-gradient(circle at 30% 22%, rgba(85,231,255,.30), transparent 38%),
-        radial-gradient(circle at 85% 80%, rgba(255,91,215,.28), transparent 36%),
+        linear-gradient(160deg, rgba(255,255,255,.18), rgba(255,255,255,.04) 60%, rgba(255,255,255,.08)),
+        radial-gradient(circle at 30% 22%, rgba(85,231,255,.35), transparent 40%),
+        radial-gradient(circle at 85% 80%, rgba(255,91,215,.32), transparent 38%),
+        radial-gradient(circle at 50% 50%, rgba(124,58,237,.15), transparent 60%),
         #11172e;
-      border: 1px solid rgba(255,255,255,.22);
-      box-shadow: 0 32px 80px rgba(0,0,0,.48), 0 0 60px rgba(85,231,255,.16);
+      border: 1.5px solid transparent;
+      background-clip: padding-box;
+      box-shadow:
+        0 32px 80px rgba(0,0,0,.48),
+        0 0 60px rgba(85,231,255,.16),
+        inset 0 1px 0 rgba(255,255,255,.12);
       transform: perspective(900px) rotateY(-7deg) rotateX(5deg);
       animation: cardFloat 4.8s ease-in-out infinite;
+      overflow: hidden;
+    }
+    .nft-frame::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      border-radius: 30px;
+      padding: 1.5px;
+      background: linear-gradient(135deg, rgba(85,231,255,.65), rgba(255,91,215,.55) 50%, rgba(255,209,102,.45));
+      -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+      -webkit-mask-composite: xor;
+      mask-composite: exclude;
+      pointer-events: none;
+    }
+    .nft-frame::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      border-radius: 30px;
+      background: linear-gradient(105deg, transparent 40%, rgba(255,255,255,.08) 50%, transparent 60%);
+      animation: shimmer 5s ease-in-out infinite;
+      pointer-events: none;
     }
     .nft-topline, .nft-footer { display: flex; justify-content: space-between; gap: 12px; }
     .nft-topline span {
       border-radius: 999px;
-      padding: 8px 10px;
-      background: rgba(0,0,0,.22);
+      padding: 8px 12px;
+      background: rgba(0,0,0,.35);
       color: #dffbff;
       font-size: 11px;
       font-weight: 950;
       letter-spacing: .08em;
+      border: 1px solid rgba(255,255,255,.10);
+      backdrop-filter: blur(8px);
     }
     .quote-mark { font-size: 120px; line-height: .4; color: rgba(255,255,255,.16); font-weight: 950; margin-top: 40px; }
     .cast-quote { color: #fff; font-size: clamp(21px, 4vw, 30px); line-height: 1.15; font-weight: 950; letter-spacing: -.04em; }
@@ -406,6 +435,7 @@
     @keyframes floatDot { 0%, 100% { transform: translateY(0) scale(1); opacity: .7; } 50% { transform: translateY(-18px) scale(1.35); opacity: 1; } }
     @keyframes popIn { from { opacity: 0; transform: translateY(10px) scale(.97); } to { opacity: 1; transform: translateY(0) scale(1); } }
     @keyframes pulseGlow { 0%, 100% { filter: saturate(1); } 50% { filter: saturate(1.22) brightness(1.05); } }
+    @keyframes shimmer { 0% { transform: translateX(-120%) skewX(-12deg); } 100% { transform: translateX(120%) skewX(-12deg); } }
 
     @media (max-width: 920px) {
       .app-shell { grid-template-columns: 1fr; padding: 14px; }

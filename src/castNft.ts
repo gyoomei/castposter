@@ -150,25 +150,37 @@ export function buildCastMintImageSvg(input: CastNftInput): string {
 
   return `<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="1600" viewBox="0 0 1200 1600">
   <defs>
-    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#07111f"/><stop offset=".45" stop-color="#172554"/><stop offset="1" stop-color="#450a3a"/></linearGradient>
-    <radialGradient id="glow" cx="30%" cy="20%" r="80%"><stop offset="0" stop-color="#55e7ff" stop-opacity=".65"/><stop offset=".45" stop-color="#ff5bd7" stop-opacity=".22"/><stop offset="1" stop-color="#050711" stop-opacity="0"/></radialGradient>
-    <filter id="blur"><feGaussianBlur stdDeviation="42"/></filter>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#050711"/><stop offset=".40" stop-color="#0f172a"/><stop offset=".75" stop-color="#1e1b4b"/><stop offset="1" stop-color="#4a044e"/></linearGradient>
+    <radialGradient id="glow1" cx="25%" cy="18%" r="75%"><stop offset="0" stop-color="#55e7ff" stop-opacity=".72"/><stop offset=".50" stop-color="#55e7ff" stop-opacity=".18"/><stop offset="1" stop-color="#050711" stop-opacity="0"/></radialGradient>
+    <radialGradient id="glow2" cx="82%" cy="78%" r="70%"><stop offset="0" stop-color="#ff5bd7" stop-opacity=".55"/><stop offset=".50" stop-color="#ff5bd7" stop-opacity=".14"/><stop offset="1" stop-color="#050711" stop-opacity="0"/></radialGradient>
+    <radialGradient id="glow3" cx="50%" cy="50%" r="60%"><stop offset="0" stop-color="#7c3aed" stop-opacity=".22"/><stop offset="1" stop-color="#050711" stop-opacity="0"/></radialGradient>
+    <filter id="blur1"><feGaussianBlur stdDeviation="52"/></filter>
+    <filter id="blur2"><feGaussianBlur stdDeviation="38"/></filter>
+    <linearGradient id="border" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#55e7ff" stop-opacity=".80"/><stop offset=".50" stop-color="#ff5bd7" stop-opacity=".70"/><stop offset="1" stop-color="#ffd166" stop-opacity=".60"/></linearGradient>
+    <linearGradient id="shimmer" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="transparent"/><stop offset=".50" stop-color="rgba(255,255,255,.06)"/><stop offset="1" stop-color="transparent"/></linearGradient>
   </defs>
-  <rect width="1200" height="1600" rx="88" fill="url(#bg)"/>
-  <rect width="1200" height="1600" rx="88" fill="url(#glow)"/>
-  <circle cx="1030" cy="210" r="160" fill="#ff5bd7" opacity=".35" filter="url(#blur)"/>
-  <circle cx="180" cy="1310" r="210" fill="#55e7ff" opacity=".30" filter="url(#blur)"/>
-  <rect x="76" y="84" width="1048" height="1432" rx="70" fill="rgba(255,255,255,.07)" stroke="rgba(255,255,255,.28)" stroke-width="3"/>
-  <text x="126" y="170" fill="#dffbff" font-family="Inter,Arial,sans-serif" font-size="42" font-weight="900" letter-spacing="8">CASTMINT</text>
-  <text x="870" y="170" fill="#ffe08a" font-family="Inter,Arial,sans-serif" font-size="34" font-weight="900">#${escapeXml(seed)}</text>
-  <text x="130" y="510" fill="rgba(255,255,255,.18)" font-family="Georgia,serif" font-size="220" font-weight="900">“</text>
-  <foreignObject x="128" y="560" width="944" height="500">
-    <div xmlns="http://www.w3.org/1999/xhtml" style="color:#fff;font-family:Inter,Arial,sans-serif;font-size:64px;line-height:1.13;font-weight:950;letter-spacing:-3px;overflow:hidden;">${escapeXml(shortCast)}</div>
+  <rect width="1200" height="1600" rx="92" fill="url(#bg)"/>
+  <rect width="1200" height="1600" rx="92" fill="url(#glow1)"/>
+  <rect width="1200" height="1600" rx="92" fill="url(#glow2)"/>
+  <rect width="1200" height="1600" rx="92" fill="url(#glow3)"/>
+  <circle cx="1050" cy="190" r="180" fill="#ff5bd7" opacity=".30" filter="url(#blur1)"/>
+  <circle cx="160" cy="1320" r="230" fill="#55e7ff" opacity=".26" filter="url(#blur2)"/>
+  <circle cx="600" cy="800" r="320" fill="#7c3aed" opacity=".14" filter="url(#blur1)"/>
+  <rect x="70" y="78" width="1060" height="1444" rx="78" fill="rgba(255,255,255,.055)" stroke="url(#border)" stroke-width="3.5"/>
+  <rect x="70" y="78" width="1060" height="1444" rx="78" fill="url(#shimmer)"/>
+  <text x="126" y="172" fill="#dffbff" font-family="Inter,Arial,sans-serif" font-size="44" font-weight="900" letter-spacing="9">CASTMINT</text>
+  <text x="858" y="172" fill="#ffd166" font-family="Inter,Arial,sans-serif" font-size="36" font-weight="900">#${escapeXml(seed)}</text>
+  <text x="130" y="504" fill="rgba(255,255,255,.16)" font-family="Georgia,serif" font-size="230" font-weight="900">“</text>
+  <foreignObject x="128" y="554" width="944" height="510">
+    <div xmlns="http://www.w3.org/1999/xhtml" style="color:#fff;font-family:Inter,Arial,sans-serif;font-size:64px;line-height:1.13;font-weight:950;letter-spacing:-3px;overflow:hidden;text-shadow:0 2px 24px rgba(0,0,0,.35);">${escapeXml(shortCast)}</div>
   </foreignObject>
-  <text x="126" y="1326" fill="#9aa4bd" font-family="Inter,Arial,sans-serif" font-size="30" font-weight="800">CREATOR</text>
-  <text x="126" y="1386" fill="#fff" font-family="Inter,Arial,sans-serif" font-size="48" font-weight="950">@${escapeXml(cleanAuthor)}</text>
-  <text x="874" y="1326" fill="#9aa4bd" font-family="Inter,Arial,sans-serif" font-size="30" font-weight="800">CHAIN</text>
-  <text x="874" y="1386" fill="#fff" font-family="Inter,Arial,sans-serif" font-size="48" font-weight="950">BASE</text>
+  <text x="126" y="1322" fill="#9aa4bd" font-family="Inter,Arial,sans-serif" font-size="28" font-weight="800" letter-spacing="2">CREATOR</text>
+  <text x="126" y="1388" fill="#fff" font-family="Inter,Arial,sans-serif" font-size="50" font-weight="950">@${escapeXml(cleanAuthor)}</text>
+  <text x="874" y="1322" fill="#9aa4bd" font-family="Inter,Arial,sans-serif" font-size="28" font-weight="800" letter-spacing="2">CHAIN</text>
+  <text x="874" y="1388" fill="#fff" font-family="Inter,Arial,sans-serif" font-size="50" font-weight="950">BASE</text>
+  <circle cx="114" cy="1486" r="5" fill="#55e7ff" opacity=".85"/>
+  <circle cx="134" cy="1486" r="5" fill="#ff5bd7" opacity=".85"/>
+  <circle cx="154" cy="1486" r="5" fill="#ffd166" opacity=".85"/>
 </svg>`;
 }
 

@@ -132,16 +132,24 @@ function addMintHistoryItem(txHash: string) {
 function renderPosterSvg(item: CastMintHistoryItem) {
   const seed = getCastNftSeed(`${item.author}:${item.castText}`);
   return `<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="1600" viewBox="0 0 1200 1600">
-  <defs><linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#07111f"/><stop offset=".46" stop-color="#1e1b4b"/><stop offset="1" stop-color="#4a044e"/></linearGradient><radialGradient id="a" cx="25%" cy="16%" r="80%"><stop offset="0" stop-color="#55e7ff" stop-opacity=".70"/><stop offset="1" stop-color="#55e7ff" stop-opacity="0"/></radialGradient><radialGradient id="b" cx="82%" cy="80%" r="75%"><stop offset="0" stop-color="#ff5bd7" stop-opacity=".48"/><stop offset="1" stop-color="#ff5bd7" stop-opacity="0"/></radialGradient></defs>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#050711"/><stop offset=".40" stop-color="#0f172a"/><stop offset=".75" stop-color="#1e1b4b"/><stop offset="1" stop-color="#4a044e"/></linearGradient>
+    <radialGradient id="a" cx="25%" cy="16%" r="80%"><stop offset="0" stop-color="#55e7ff" stop-opacity=".75"/><stop offset="1" stop-color="#55e7ff" stop-opacity="0"/></radialGradient>
+    <radialGradient id="b" cx="82%" cy="80%" r="75%"><stop offset="0" stop-color="#ff5bd7" stop-opacity=".52"/><stop offset="1" stop-color="#ff5bd7" stop-opacity="0"/></radialGradient>
+    <linearGradient id="border" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#55e7ff" stop-opacity=".75"/><stop offset=".50" stop-color="#ff5bd7" stop-opacity=".65"/><stop offset="1" stop-color="#ffd166" stop-opacity=".55"/></linearGradient>
+  </defs>
   <rect width="1200" height="1600" rx="92" fill="url(#bg)"/><rect width="1200" height="1600" rx="92" fill="url(#a)"/><rect width="1200" height="1600" rx="92" fill="url(#b)"/>
-  <rect x="74" y="82" width="1052" height="1436" rx="76" fill="rgba(255,255,255,.075)" stroke="rgba(255,255,255,.30)" stroke-width="3"/>
-  <text x="126" y="176" fill="#dffbff" font-family="Inter,Arial,sans-serif" font-size="42" font-weight="900" letter-spacing="8">CASTMINT</text>
-  <text x="126" y="252" fill="#ffd166" font-family="Inter,Arial,sans-serif" font-size="30" font-weight="900">MINTED ON BASE</text>
-  <text x="126" y="494" fill="rgba(255,255,255,.18)" font-family="Georgia,serif" font-size="220" font-weight="900">“</text>
-  <foreignObject x="126" y="548" width="948" height="520"><div xmlns="http://www.w3.org/1999/xhtml" style="color:#fff;font-family:Inter,Arial,sans-serif;font-size:62px;line-height:1.12;font-weight:950;letter-spacing:-3px;overflow:hidden;">${escapeHtml(shortText(item.castText, 170))}</div></foreignObject>
-  <text x="126" y="1258" fill="#9aa4bd" font-family="Inter,Arial,sans-serif" font-size="30" font-weight="800">CREATOR</text><text x="126" y="1314" fill="#fff" font-family="Inter,Arial,sans-serif" font-size="50" font-weight="950">@${escapeHtml(item.author)}</text>
-  <text x="126" y="1398" fill="#9aa4bd" font-family="Inter,Arial,sans-serif" font-size="28" font-weight="800">TX ${escapeHtml(formatTxHash(item.txHash))}</text>
-  <text x="848" y="1398" fill="#ffe08a" font-family="Inter,Arial,sans-serif" font-size="34" font-weight="950">#${escapeHtml(seed)}</text>
+  <rect x="70" y="78" width="1060" height="1444" rx="78" fill="rgba(255,255,255,.055)" stroke="url(#border)" stroke-width="3.5"/>
+  <text x="126" y="176" fill="#dffbff" font-family="Inter,Arial,sans-serif" font-size="44" font-weight="900" letter-spacing="9">CASTMINT</text>
+  <text x="126" y="256" fill="#ffd166" font-family="Inter,Arial,sans-serif" font-size="32" font-weight="900">MINTED ON BASE</text>
+  <text x="130" y="498" fill="rgba(255,255,255,.16)" font-family="Georgia,serif" font-size="230" font-weight="900">“</text>
+  <foreignObject x="126" y="548" width="948" height="520"><div xmlns="http://www.w3.org/1999/xhtml" style="color:#fff;font-family:Inter,Arial,sans-serif;font-size:62px;line-height:1.12;font-weight:950;letter-spacing:-3px;overflow:hidden;text-shadow:0 2px 24px rgba(0,0,0,.35);">${escapeHtml(shortText(item.castText, 170))}</div></foreignObject>
+  <text x="126" y="1258" fill="#9aa4bd" font-family="Inter,Arial,sans-serif" font-size="28" font-weight="800" letter-spacing="2">CREATOR</text><text x="126" y="1318" fill="#fff" font-family="Inter,Arial,sans-serif" font-size="50" font-weight="950">@${escapeHtml(item.author)}</text>
+  <text x="126" y="1402" fill="#9aa4bd" font-family="Inter,Arial,sans-serif" font-size="28" font-weight="800">TX ${escapeHtml(formatTxHash(item.txHash))}</text>
+  <text x="848" y="1402" fill="#ffe08a" font-family="Inter,Arial,sans-serif" font-size="36" font-weight="950">#${escapeHtml(seed)}</text>
+  <circle cx="114" cy="1486" r="5" fill="#55e7ff" opacity=".85"/>
+  <circle cx="134" cy="1486" r="5" fill="#ff5bd7" opacity=".85"/>
+  <circle cx="154" cy="1486" r="5" fill="#ffd166" opacity=".85"/>
 </svg>`;
 }
 
@@ -326,17 +334,9 @@ function syncShareButton() {
   shareBtn.disabled = !state.lastMintHash || state.minting;
 }
 
-function syncMiniAppButton() {
-  const addBtn = document.getElementById('addMiniAppBtn') as HTMLButtonElement | null;
-  if (!addBtn) return;
-  addBtn.disabled = !state.addMiniAppAvailable;
-  addBtn.textContent = state.addMiniAppAvailable ? 'Add Mini App' : 'Mini App ready';
-}
-
 function syncActionButtons() {
   syncMintButton();
   syncShareButton();
-  syncMiniAppButton();
 }
 
 function setStatus(message: string) {
@@ -353,9 +353,8 @@ async function shareMintSuccess() {
   }
 
   const appUrl = `${window.location.origin}/?v=9`;
-  const castLine = state.castUrl ? `Original cast: ${state.castUrl}\n` : '';
   const txLine = `Base tx: https://basescan.org/tx/${state.lastMintHash}`;
-  const text = `Just minted a Farcaster cast as an NFT on Base with CastMint ✦\n\n@${state.author || 'caster'} → collectible onchain.\n${castLine}${txLine}\n\nMint yours:`;
+  const text = `Just minted a Farcaster cast as an NFT on Base with CastMint ✦\n\n"${shortText(state.castText, 120)}"\n— @${state.author || 'caster'}\n\n${txLine}\n\nMint yours:`;
 
   setStatus('Opening Farcaster share composer…');
   try {
@@ -382,20 +381,6 @@ async function createResultPoster() {
   state.posterUrl = posterDataUrl(item);
   renderSuccessCard();
   setStatus('Result poster generated locally. Long-press/save image, then share it anywhere.');
-}
-
-async function addMiniApp() {
-  try {
-    setStatus('Opening Farcaster Mini App save prompt…');
-    const actions = sdk.actions as unknown as { addMiniApp?: () => Promise<void>; addFrame?: () => Promise<void> };
-    if (typeof actions.addMiniApp === 'function') await actions.addMiniApp();
-    else if (typeof actions.addFrame === 'function') await actions.addFrame();
-    else throw new Error('Add Mini App action unavailable');
-    setStatus('Mini App prompt opened.');
-  } catch (err) {
-    console.warn('Add Mini App unavailable:', err);
-    setStatus('Add Mini App hanya tersedia saat dibuka di Farcaster client.');
-  }
 }
 
 async function fetchJson(url: string) {
@@ -570,11 +555,6 @@ function renderApp() {
           <p>No manual text or creator fields. CastMint reads the original cast and prepares a wallet mint with embedded onchain metadata.</p>
         </div>
         <div class="hero-glowline" aria-hidden="true"></div>
-        <div class="hero-hint">
-          <span>01</span><strong>Paste URL</strong>
-          <span>02</span><strong>Auto-read cast</strong>
-          <span>03</span><strong>Mint on Base</strong>
-        </div>
       </section>
       <section class="workspace">
         <div id="previewCard" class="preview-card"></div>
@@ -585,7 +565,6 @@ function renderApp() {
           <div class="mini-profile" id="miniProfile">${state.detectedUser ? `Detected Farcaster user: @${escapeHtml(state.detectedUser)}` : 'Open in Farcaster for auto user detection.'}</div>
           <div class="style-picker" id="stylePicker"></div>
           <button id="shareBtn" class="share-btn" type="button" hidden>Share minted NFT</button>
-          <button id="addMiniAppBtn" class="ghost-btn add-mini-btn" type="button">Add Mini App</button>
           <section id="successCard" class="success-card" hidden></section>
           <section class="history-card"><div class="section-title">Local mint history</div><div id="historyPanel"></div></section>
           <div id="metadataPanel" class="metadata-panel"></div><div id="status" class="status">${escapeHtml(state.status)}</div>
@@ -601,7 +580,6 @@ function bindEvents() {
   const urlInput = document.getElementById('castUrl') as HTMLInputElement | null;
   const mintBtn = document.getElementById('mintBtn') as HTMLButtonElement | null;
   const shareBtn = document.getElementById('shareBtn') as HTMLButtonElement | null;
-  const addMiniAppBtn = document.getElementById('addMiniAppBtn') as HTMLButtonElement | null;
   const closeBtn = document.getElementById('closeBtn') as HTMLButtonElement | null;
 
   const updateFromInputs = () => {
@@ -653,7 +631,6 @@ function bindEvents() {
   form?.addEventListener('submit', (event) => { event.preventDefault(); resolveUrlInput(); });
   mintBtn?.addEventListener('click', mintCastNft);
   shareBtn?.addEventListener('click', shareMintSuccess);
-  addMiniAppBtn?.addEventListener('click', addMiniApp);
   closeBtn?.addEventListener('click', async () => {
     try { setStatus('Closing mini app…'); await sdk.actions.close(); }
     catch { if (window.history.length > 1) window.history.back(); else window.location.href = 'https://farcaster.xyz/'; }
