@@ -370,13 +370,12 @@ async function shareMintSuccess() {
     return;
   }
 
-  const appUrl = `${window.location.origin}/?v=10`;
   const txLine = `Base tx: https://basescan.org/tx/${state.lastMintHash}`;
   const text = `Just minted a Farcaster cast as an NFT on Base ✦\n\n"${shortText(state.castText, 120)}"\n— @${state.author || 'caster'}\n\n${txLine}`;
 
   setStatus('Opening Farcaster share composer…');
   try {
-    await sdk.actions.composeCast({ text, embeds: [appUrl] });
+    await sdk.actions.composeCast({ text });
     setStatus('Share composer opened. Review and cast when ready.');
   } catch (err) {
     console.warn('Native share failed, using fallback:', err);
@@ -562,29 +561,43 @@ function renderApp() {
 
   app.innerHTML = `
     <main class="app-shell">
-      <section class="hero-panel">
+      <section class="hero-panel glass-panel">
         <nav class="topbar">
-          <div class="brand-mark">✦</div><div><strong>CastMint</strong><span>Cast → NFT</span></div>
+          <div class="brand-mark">✦</div>
+          <div>
+            <strong>CastMint</strong>
+            <span>Cast → NFT on Base</span>
+          </div>
           <button id="closeBtn" class="icon-btn" aria-label="Back to Farcaster">←</button>
         </nav>
         <div class="hero-copy">
-          <div class="badge">Farcaster Mini App · Base NFT Mint</div>
+          <div class="badge">Farcaster Mini App</div>
           <h1>Paste cast URL. Mint it on Base.</h1>
-          <p>No manual text or creator fields. CastMint reads the original cast and prepares a wallet mint with embedded onchain metadata.</p>
+          <p>Auto-reads any Farcaster cast and prepares a wallet-ready NFT mint with embedded onchain metadata.</p>
+        </div>
+        <div class="stats-row">
+          <div class="stat"><strong>${state.history.length}</strong><span>Minted</span></div>
+          <div class="stat"><strong>Base</strong><span>Network</span></div>
+          <div class="stat"><strong>Onchain</strong><span>Metadata</span></div>
         </div>
       </section>
       <section class="workspace">
-        <div id="previewCard" class="preview-card"></div>
-        <form id="castForm" class="control-card">
-          <label><span>Cast URL</span><input id="castUrl" inputmode="url" autocomplete="off" placeholder="https://warpcast.com/username/0x..." /></label>
+        <div id="previewCard" class="preview-card glass-panel"></div>
+        <form id="castForm" class="control-card glass-panel">
+          <div class="section-label">Cast URL</div>
+          <label><input id="castUrl" inputmode="url" autocomplete="off" placeholder="https://warpcast.com/username/0x..." /></label>
           <button id="generateBtn" class="primary-btn" type="submit">Generate NFT Preview</button>
           <button id="mintBtn" class="mint-btn" type="button">${getMintButtonLabel()}</button>
-          <div class="mini-profile" id="miniProfile">${state.detectedUser ? `Detected Farcaster user: @${escapeHtml(state.detectedUser)}` : 'Open in Farcaster for auto user detection.'}</div>
-          <div class="style-picker" id="stylePicker"></div>
           <button id="shareBtn" class="share-btn" type="button" hidden>Share minted NFT</button>
+          <div class="mini-profile" id="miniProfile">${state.detectedUser ? `Connected: @${escapeHtml(state.detectedUser)}` : 'Open in Farcaster for auto user detection.'}</div>
+          <div class="style-picker" id="stylePicker"></div>
           <section id="successCard" class="success-card" hidden></section>
-          <section class="history-card"><div class="section-title">Local mint history</div><div id="historyPanel"></div></section>
-          <div id="metadataPanel" class="metadata-panel"></div><div id="status" class="status">${escapeHtml(state.status)}</div>
+          <section class="history-card">
+            <div class="section-title">Mint History</div>
+            <div id="historyPanel"></div>
+          </section>
+          <div id="metadataPanel" class="metadata-panel"></div>
+          <div id="status" class="status">${escapeHtml(state.status)}</div>
         </form>
       </section>
     </main>`;
