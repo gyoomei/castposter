@@ -569,7 +569,7 @@ function renderApp() {
         </nav>
         <div class="hero-copy">
           <div class="badge">Farcaster Mini App · Base NFT Mint</div>
-          <h1>Paste cast URL. Mint it on Base.</h1>
+          <h1>Paste a cast URL</h1>
           <p>No manual text or creator fields. CastMint reads the original cast and prepares a wallet mint with embedded onchain metadata.</p>
         </div>
         <div class="hero-glowline" aria-hidden="true"></div>
