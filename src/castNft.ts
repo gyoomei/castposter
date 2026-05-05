@@ -150,37 +150,47 @@ export function buildCastMintImageSvg(input: CastNftInput): string {
 
   return `<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="1600" viewBox="0 0 1200 1600">
   <defs>
-    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#050711"/><stop offset=".40" stop-color="#0f172a"/><stop offset=".75" stop-color="#1e1b4b"/><stop offset="1" stop-color="#4a044e"/></linearGradient>
-    <radialGradient id="glow1" cx="25%" cy="18%" r="75%"><stop offset="0" stop-color="#55e7ff" stop-opacity=".72"/><stop offset=".50" stop-color="#55e7ff" stop-opacity=".18"/><stop offset="1" stop-color="#050711" stop-opacity="0"/></radialGradient>
-    <radialGradient id="glow2" cx="82%" cy="78%" r="70%"><stop offset="0" stop-color="#ff5bd7" stop-opacity=".55"/><stop offset=".50" stop-color="#ff5bd7" stop-opacity=".14"/><stop offset="1" stop-color="#050711" stop-opacity="0"/></radialGradient>
-    <radialGradient id="glow3" cx="50%" cy="50%" r="60%"><stop offset="0" stop-color="#7c3aed" stop-opacity=".22"/><stop offset="1" stop-color="#050711" stop-opacity="0"/></radialGradient>
-    <filter id="blur1"><feGaussianBlur stdDeviation="52"/></filter>
-    <filter id="blur2"><feGaussianBlur stdDeviation="38"/></filter>
-    <linearGradient id="border" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#55e7ff" stop-opacity=".80"/><stop offset=".50" stop-color="#ff5bd7" stop-opacity=".70"/><stop offset="1" stop-color="#ffd166" stop-opacity=".60"/></linearGradient>
-    <linearGradient id="shimmer" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="transparent"/><stop offset=".50" stop-color="rgba(255,255,255,.06)"/><stop offset="1" stop-color="transparent"/></linearGradient>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#02040a"/><stop offset=".35" stop-color="#0b1224"/><stop offset=".70" stop-color="#1a1035"/><stop offset="1" stop-color="#3a0a3d"/></linearGradient>
+    <radialGradient id="glow1" cx="22%" cy="14%" r="78%"><stop offset="0" stop-color="#55e7ff" stop-opacity=".78"/><stop offset=".45" stop-color="#55e7ff" stop-opacity=".16"/><stop offset="1" stop-color="#02040a" stop-opacity="0"/></radialGradient>
+    <radialGradient id="glow2" cx="84%" cy="82%" r="72%"><stop offset="0" stop-color="#ff5bd7" stop-opacity=".60"/><stop offset=".45" stop-color="#ff5bd7" stop-opacity=".12"/><stop offset="1" stop-color="#02040a" stop-opacity="0"/></radialGradient>
+    <radialGradient id="glow3" cx="50%" cy="48%" r="58%"><stop offset="0" stop-color="#7c3aed" stop-opacity=".26"/><stop offset="1" stop-color="#02040a" stop-opacity="0"/></radialGradient>
+    <radialGradient id="glow4" cx="78%" cy="18%" r="55%"><stop offset="0" stop-color="#ffd166" stop-opacity=".22"/><stop offset="1" stop-color="#02040a" stop-opacity="0"/></radialGradient>
+    <filter id="blur1"><feGaussianBlur stdDeviation="58"/></filter>
+    <filter id="blur2"><feGaussianBlur stdDeviation="42"/></filter>
+    <linearGradient id="border" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#55e7ff" stop-opacity=".85"/><stop offset=".50" stop-color="#ff5bd7" stop-opacity=".72"/><stop offset="1" stop-color="#ffd166" stop-opacity=".65"/></linearGradient>
+    <linearGradient id="shimmer" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="transparent"/><stop offset=".50" stop-color="rgba(255,255,255,.07)"/><stop offset="1" stop-color="transparent"/></linearGradient>
+    <linearGradient id="titleGrad" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#dffbff"/><stop offset=".60" stop-color="#ffd166"/></linearGradient>
+    <linearGradient id="accentBar" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#55e7ff"/><stop offset=".50" stop-color="#ff5bd7"/><stop offset="1" stop-color="#ffd166"/></linearGradient>
   </defs>
   <rect width="1200" height="1600" rx="92" fill="url(#bg)"/>
   <rect width="1200" height="1600" rx="92" fill="url(#glow1)"/>
   <rect width="1200" height="1600" rx="92" fill="url(#glow2)"/>
   <rect width="1200" height="1600" rx="92" fill="url(#glow3)"/>
-  <circle cx="1050" cy="190" r="180" fill="#ff5bd7" opacity=".30" filter="url(#blur1)"/>
-  <circle cx="160" cy="1320" r="230" fill="#55e7ff" opacity=".26" filter="url(#blur2)"/>
-  <circle cx="600" cy="800" r="320" fill="#7c3aed" opacity=".14" filter="url(#blur1)"/>
-  <rect x="70" y="78" width="1060" height="1444" rx="78" fill="rgba(255,255,255,.055)" stroke="url(#border)" stroke-width="3.5"/>
-  <rect x="70" y="78" width="1060" height="1444" rx="78" fill="url(#shimmer)"/>
-  <text x="126" y="172" fill="#dffbff" font-family="Inter,Arial,sans-serif" font-size="44" font-weight="900" letter-spacing="9">CASTMINT</text>
-  <text x="858" y="172" fill="#ffd166" font-family="Inter,Arial,sans-serif" font-size="36" font-weight="900">#${escapeXml(seed)}</text>
-  <text x="130" y="504" fill="rgba(255,255,255,.16)" font-family="Georgia,serif" font-size="230" font-weight="900">“</text>
-  <foreignObject x="128" y="554" width="944" height="510">
-    <div xmlns="http://www.w3.org/1999/xhtml" style="color:#fff;font-family:Inter,Arial,sans-serif;font-size:64px;line-height:1.13;font-weight:950;letter-spacing:-3px;overflow:hidden;text-shadow:0 2px 24px rgba(0,0,0,.35);">${escapeXml(shortCast)}</div>
+  <rect width="1200" height="1600" rx="92" fill="url(#glow4)"/>
+  <circle cx="1080" cy="160" r="200" fill="#ff5bd7" opacity=".34" filter="url(#blur1)"/>
+  <circle cx="140" cy="1360" r="260" fill="#55e7ff" opacity=".30" filter="url(#blur2)"/>
+  <circle cx="620" cy="820" r="360" fill="#7c3aed" opacity=".16" filter="url(#blur1)"/>
+  <circle cx="980" cy="1100" r="180" fill="#ffd166" opacity=".14" filter="url(#blur2)"/>
+  <rect x="68" y="76" width="1064" height="1448" rx="80" fill="rgba(255,255,255,.045)" stroke="url(#border)" stroke-width="3.5"/>
+  <rect x="68" y="76" width="1064" height="1448" rx="80" fill="url(#shimmer)"/>
+  <text x="126" y="172" fill="url(#titleGrad)" font-family="Inter,Arial,sans-serif" font-size="46" font-weight="900" letter-spacing="10">CASTMINT</text>
+  <rect x="126" y="196" width="180" height="3" rx="1.5" fill="url(#accentBar)" opacity=".85"/>
+  <text x="848" y="172" fill="#ffd166" font-family="Inter,Arial,sans-serif" font-size="38" font-weight="900">#${escapeXml(seed)}</text>
+  <text x="126" y="246" fill="#55e7ff" font-family="Inter,Arial,sans-serif" font-size="22" font-weight="800" letter-spacing="4">MINTED ON BASE</text>
+  <text x="130" y="510" fill="rgba(255,255,255,.14)" font-family="Georgia,serif" font-size="240" font-weight="900">“</text>
+  <foreignObject x="128" y="560" width="944" height="500">
+    <div xmlns="http://www.w3.org/1999/xhtml" style="color:#fff;font-family:Inter,Arial,sans-serif;font-size:64px;line-height:1.13;font-weight:950;letter-spacing:-3px;overflow:hidden;text-shadow:0 2px 28px rgba(0,0,0,.40);">${escapeXml(shortCast)}</div>
   </foreignObject>
-  <text x="126" y="1322" fill="#9aa4bd" font-family="Inter,Arial,sans-serif" font-size="28" font-weight="800" letter-spacing="2">CREATOR</text>
-  <text x="126" y="1388" fill="#fff" font-family="Inter,Arial,sans-serif" font-size="50" font-weight="950">@${escapeXml(cleanAuthor)}</text>
-  <text x="874" y="1322" fill="#9aa4bd" font-family="Inter,Arial,sans-serif" font-size="28" font-weight="800" letter-spacing="2">CHAIN</text>
-  <text x="874" y="1388" fill="#fff" font-family="Inter,Arial,sans-serif" font-size="50" font-weight="950">BASE</text>
-  <circle cx="114" cy="1486" r="5" fill="#55e7ff" opacity=".85"/>
-  <circle cx="134" cy="1486" r="5" fill="#ff5bd7" opacity=".85"/>
-  <circle cx="154" cy="1486" r="5" fill="#ffd166" opacity=".85"/>
+  <text x="126" y="1330" fill="#9aa4bd" font-family="Inter,Arial,sans-serif" font-size="26" font-weight="800" letter-spacing="2">CREATOR</text>
+  <text x="126" y="1396" fill="#fff" font-family="Inter,Arial,sans-serif" font-size="52" font-weight="950">@${escapeXml(cleanAuthor)}</text>
+  <text x="876" y="1330" fill="#9aa4bd" font-family="Inter,Arial,sans-serif" font-size="26" font-weight="800" letter-spacing="2">CHAIN</text>
+  <text x="876" y="1396" fill="#fff" font-family="Inter,Arial,sans-serif" font-size="52" font-weight="950">BASE</text>
+  <rect x="126" y="1460" width="80" height="3" rx="1.5" fill="#55e7ff" opacity=".85"/>
+  <rect x="218" y="1460" width="50" height="3" rx="1.5" fill="#ff5bd7" opacity=".85"/>
+  <rect x="280" y="1460" width="30" height="3" rx="1.5" fill="#ffd166" opacity=".85"/>
+  <circle cx="114" cy="1492" r="5" fill="#55e7ff" opacity=".90"/>
+  <circle cx="134" cy="1492" r="5" fill="#ff5bd7" opacity=".90"/>
+  <circle cx="154" cy="1492" r="5" fill="#ffd166" opacity=".90"/>
 </svg>`;
 }
 

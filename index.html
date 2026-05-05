@@ -8,12 +8,12 @@
   <meta name="description" content="Turn any Farcaster cast into a collectible NFT concept on Base.">
   <meta property="og:title" content="CastMint — Cast to NFT">
   <meta property="og:description" content="Turn any Farcaster cast into a collectible NFT concept on Base.">
-  <meta property="og:image" content="https://castposter.vercel.app/og.png?v=8">
+  <meta property="og:image" content="https://castposter.vercel.app/og.png?v=10">
   <meta name="twitter:card" content="summary_large_image">
   <link rel="canonical" href="https://castposter.vercel.app/">
 
-  <meta name="fc:miniapp" content='{"version":"1","imageUrl":"https://castposter.vercel.app/og.png?v=8","button":{"title":"Create Cast NFT","action":{"type":"launch_frame","name":"CastMint","url":"https://castposter.vercel.app/?v=8","splashImageUrl":"https://castposter.vercel.app/icon.png?v=8","splashBackgroundColor":"#070816"}}}' />
-  <meta name="fc:frame" content='{"version":"1","imageUrl":"https://castposter.vercel.app/og.png?v=8","button":{"title":"Create Cast NFT","action":{"type":"launch_frame","name":"CastMint","url":"https://castposter.vercel.app/?v=8","splashImageUrl":"https://castposter.vercel.app/icon.png?v=8","splashBackgroundColor":"#070816"}}}' />
+  <meta name="fc:miniapp" content='{"version":"1","imageUrl":"https://castposter.vercel.app/og.png?v=10","button":{"title":"Create Cast NFT","action":{"type":"launch_frame","name":"CastMint","url":"https://castposter.vercel.app/?v=10","splashImageUrl":"https://castposter.vercel.app/icon.png?v=10","splashBackgroundColor":"#070816"}}}' />
+  <meta name="fc:frame" content='{"version":"1","imageUrl":"https://castposter.vercel.app/og.png?v=10","button":{"title":"Create Cast NFT","action":{"type":"launch_frame","name":"CastMint","url":"https://castposter.vercel.app/?v=10","splashImageUrl":"https://castposter.vercel.app/icon.png?v=10","splashBackgroundColor":"#070816"}}}' />
 
   <style>
     :root {
@@ -395,12 +395,38 @@
     .mini-link.subtle { grid-column: 1 / -1; color: #cbd5e1; background: rgba(255,255,255,.055); }
     .poster-preview { width: 100%; max-height: 220px; object-fit: cover; border-radius: 14px; margin-top: 12px; border: 1px solid rgba(255,255,255,.14); }
     .history-empty { margin-top: 8px; color: var(--muted); font-size: 12px; line-height: 1.4; }
-    .history-item { display: grid; grid-template-columns: 1fr auto; gap: 10px; align-items: center; padding: 10px 0; border-top: 1px solid rgba(255,255,255,.08); }
-    .history-item:first-child { margin-top: 8px; }
-    .history-item strong, .history-item span { display: block; }
-    .history-item strong { font-size: 12px; }
-    .history-item span { max-width: 190px; color: var(--muted); font-size: 11px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .history-item a { color: #7dd3fc; font-size: 11px; font-weight: 900; text-decoration: none; }
+    .history-list { display: grid; gap: 10px; margin-top: 10px; }
+    .history-item {
+      display: grid; grid-template-columns: 1fr auto auto; gap: 12px; align-items: center;
+      padding: 14px 16px;
+      border: 1.5px solid rgba(85,231,255,.18);
+      border-radius: 20px;
+      background: linear-gradient(135deg, rgba(14,20,44,.92), rgba(8,11,25,.78));
+      box-shadow: 0 12px 40px rgba(0,0,0,.28), inset 0 1px 0 rgba(255,255,255,.06);
+      position: relative; overflow: hidden;
+      transition: transform .2s ease, box-shadow .2s ease, border-color .2s ease;
+    }
+    .history-item:hover { transform: translateY(-2px); border-color: rgba(85,231,255,.45); box-shadow: 0 16px 48px rgba(85,231,255,.10); }
+    .history-item::before {
+      content: ""; position: absolute; inset: 0; border-radius: 20px; padding: 1.5px;
+      background: linear-gradient(135deg, rgba(85,231,255,.35), transparent 40%, rgba(255,91,215,.25));
+      -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+      -webkit-mask-composite: xor; mask-composite: exclude; pointer-events: none;
+    }
+    .history-item strong { display: block; font-size: 13px; color: #dffbff; }
+    .history-item .cast-snippet { display: block; max-width: 210px; color: var(--muted); font-size: 11px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 3px; }
+    .history-item .tx-badge {
+      padding: 6px 10px; border-radius: 999px; background: rgba(85,231,255,.10);
+      border: 1px solid rgba(85,231,255,.20); color: #7dd3fc; font-size: 10px; font-weight: 900;
+      text-decoration: none; transition: background .15s ease;
+    }
+    .history-item .tx-badge:hover { background: rgba(85,231,255,.20); }
+    .history-item .poster-btn {
+      width: 32px; height: 32px; border-radius: 10px; display: grid; place-items: center;
+      border: 1px solid rgba(255,209,102,.25); background: rgba(255,209,102,.10);
+      color: #ffd166; font-size: 14px; cursor: pointer; transition: all .15s ease;
+    }
+    .history-item .poster-btn:hover { background: rgba(255,209,102,.20); transform: scale(1.08); }
     .preview-card.style-poster .nft-frame { transform: perspective(900px) rotateY(0deg) rotateX(0deg); background: linear-gradient(145deg, rgba(255,209,102,.16), rgba(255,91,215,.10)), #10152c; }
     .preview-card.style-minimal .nft-frame { background: linear-gradient(160deg, rgba(255,255,255,.10), rgba(255,255,255,.025)), #0b1020; box-shadow: 0 32px 80px rgba(0,0,0,.52); }
     .preview-card.style-minimal::before { opacity: .35; }

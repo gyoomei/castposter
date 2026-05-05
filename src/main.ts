@@ -133,23 +133,29 @@ function renderPosterSvg(item: CastMintHistoryItem) {
   const seed = getCastNftSeed(`${item.author}:${item.castText}`);
   return `<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="1600" viewBox="0 0 1200 1600">
   <defs>
-    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#050711"/><stop offset=".40" stop-color="#0f172a"/><stop offset=".75" stop-color="#1e1b4b"/><stop offset="1" stop-color="#4a044e"/></linearGradient>
-    <radialGradient id="a" cx="25%" cy="16%" r="80%"><stop offset="0" stop-color="#55e7ff" stop-opacity=".75"/><stop offset="1" stop-color="#55e7ff" stop-opacity="0"/></radialGradient>
-    <radialGradient id="b" cx="82%" cy="80%" r="75%"><stop offset="0" stop-color="#ff5bd7" stop-opacity=".52"/><stop offset="1" stop-color="#ff5bd7" stop-opacity="0"/></radialGradient>
-    <linearGradient id="border" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#55e7ff" stop-opacity=".75"/><stop offset=".50" stop-color="#ff5bd7" stop-opacity=".65"/><stop offset="1" stop-color="#ffd166" stop-opacity=".55"/></linearGradient>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#02040a"/><stop offset=".35" stop-color="#0b1224"/><stop offset=".70" stop-color="#1a1035"/><stop offset="1" stop-color="#3a0a3d"/></linearGradient>
+    <radialGradient id="a" cx="22%" cy="14%" r="78%"><stop offset="0" stop-color="#55e7ff" stop-opacity=".80"/><stop offset=".45" stop-color="#55e7ff" stop-opacity=".16"/><stop offset="1" stop-color="#02040a" stop-opacity="0"/></radialGradient>
+    <radialGradient id="b" cx="84%" cy="82%" r="72%"><stop offset="0" stop-color="#ff5bd7" stop-opacity=".58"/><stop offset=".45" stop-color="#ff5bd7" stop-opacity=".12"/><stop offset="1" stop-color="#02040a" stop-opacity="0"/></radialGradient>
+    <linearGradient id="border" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#55e7ff" stop-opacity=".82"/><stop offset=".50" stop-color="#ff5bd7" stop-opacity=".68"/><stop offset="1" stop-color="#ffd166" stop-opacity=".58"/></linearGradient>
+    <linearGradient id="titleGrad" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#dffbff"/><stop offset=".60" stop-color="#ffd166"/></linearGradient>
+    <linearGradient id="accentBar" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#55e7ff"/><stop offset=".50" stop-color="#ff5bd7"/><stop offset="1" stop-color="#ffd166"/></linearGradient>
   </defs>
   <rect width="1200" height="1600" rx="92" fill="url(#bg)"/><rect width="1200" height="1600" rx="92" fill="url(#a)"/><rect width="1200" height="1600" rx="92" fill="url(#b)"/>
-  <rect x="70" y="78" width="1060" height="1444" rx="78" fill="rgba(255,255,255,.055)" stroke="url(#border)" stroke-width="3.5"/>
-  <text x="126" y="176" fill="#dffbff" font-family="Inter,Arial,sans-serif" font-size="44" font-weight="900" letter-spacing="9">CASTMINT</text>
-  <text x="126" y="256" fill="#ffd166" font-family="Inter,Arial,sans-serif" font-size="32" font-weight="900">MINTED ON BASE</text>
-  <text x="130" y="498" fill="rgba(255,255,255,.16)" font-family="Georgia,serif" font-size="230" font-weight="900">“</text>
-  <foreignObject x="126" y="548" width="948" height="520"><div xmlns="http://www.w3.org/1999/xhtml" style="color:#fff;font-family:Inter,Arial,sans-serif;font-size:62px;line-height:1.12;font-weight:950;letter-spacing:-3px;overflow:hidden;text-shadow:0 2px 24px rgba(0,0,0,.35);">${escapeHtml(shortText(item.castText, 170))}</div></foreignObject>
-  <text x="126" y="1258" fill="#9aa4bd" font-family="Inter,Arial,sans-serif" font-size="28" font-weight="800" letter-spacing="2">CREATOR</text><text x="126" y="1318" fill="#fff" font-family="Inter,Arial,sans-serif" font-size="50" font-weight="950">@${escapeHtml(item.author)}</text>
-  <text x="126" y="1402" fill="#9aa4bd" font-family="Inter,Arial,sans-serif" font-size="28" font-weight="800">TX ${escapeHtml(formatTxHash(item.txHash))}</text>
-  <text x="848" y="1402" fill="#ffe08a" font-family="Inter,Arial,sans-serif" font-size="36" font-weight="950">#${escapeHtml(seed)}</text>
-  <circle cx="114" cy="1486" r="5" fill="#55e7ff" opacity=".85"/>
-  <circle cx="134" cy="1486" r="5" fill="#ff5bd7" opacity=".85"/>
-  <circle cx="154" cy="1486" r="5" fill="#ffd166" opacity=".85"/>
+  <rect x="68" y="76" width="1064" height="1448" rx="80" fill="rgba(255,255,255,.045)" stroke="url(#border)" stroke-width="3.5"/>
+  <text x="126" y="172" fill="url(#titleGrad)" font-family="Inter,Arial,sans-serif" font-size="46" font-weight="900" letter-spacing="10">CASTMINT</text>
+  <rect x="126" y="196" width="180" height="3" rx="1.5" fill="url(#accentBar)" opacity=".85"/>
+  <text x="126" y="252" fill="#55e7ff" font-family="Inter,Arial,sans-serif" font-size="22" font-weight="800" letter-spacing="4">MINTED ON BASE</text>
+  <text x="130" y="510" fill="rgba(255,255,255,.14)" font-family="Georgia,serif" font-size="240" font-weight="900">“</text>
+  <foreignObject x="128" y="560" width="944" height="500"><div xmlns="http://www.w3.org/1999/xhtml" style="color:#fff;font-family:Inter,Arial,sans-serif;font-size:64px;line-height:1.13;font-weight:950;letter-spacing:-3px;overflow:hidden;text-shadow:0 2px 28px rgba(0,0,0,.40);">${escapeHtml(shortText(item.castText, 170))}</div></foreignObject>
+  <text x="126" y="1330" fill="#9aa4bd" font-family="Inter,Arial,sans-serif" font-size="26" font-weight="800" letter-spacing="2">CREATOR</text><text x="126" y="1396" fill="#fff" font-family="Inter,Arial,sans-serif" font-size="52" font-weight="950">@${escapeHtml(item.author)}</text>
+  <text x="126" y="1464" fill="#9aa4bd" font-family="Inter,Arial,sans-serif" font-size="26" font-weight="800">TX ${escapeHtml(formatTxHash(item.txHash))}</text>
+  <text x="844" y="1464" fill="#ffe08a" font-family="Inter,Arial,sans-serif" font-size="38" font-weight="950">#${escapeHtml(seed)}</text>
+  <rect x="126" y="1506" width="80" height="3" rx="1.5" fill="#55e7ff" opacity=".85"/>
+  <rect x="218" y="1506" width="50" height="3" rx="1.5" fill="#ff5bd7" opacity=".85"/>
+  <rect x="280" y="1506" width="30" height="3" rx="1.5" fill="#ffd166" opacity=".85"/>
+  <circle cx="114" cy="1538" r="5" fill="#55e7ff" opacity=".90"/>
+  <circle cx="134" cy="1538" r="5" fill="#ff5bd7" opacity=".90"/>
+  <circle cx="154" cy="1538" r="5" fill="#ffd166" opacity=".90"/>
 </svg>`;
 }
 
@@ -307,12 +313,24 @@ function renderHistory() {
     history.innerHTML = '<div class="history-empty">Local mint history will appear here after a successful mint.</div>';
     return;
   }
-  history.innerHTML = state.history.map((item) => `
-    <article class="history-item">
-      <div><strong>@${escapeHtml(item.author)}</strong><span>${escapeHtml(shortText(item.castText, 70))}</span></div>
-      <a href="https://basescan.org/tx/${item.txHash}" target="_blank" rel="noopener noreferrer">${escapeHtml(formatTxHash(item.txHash))}</a>
+  history.innerHTML = `<div class="history-list">${state.history.map((item, index) => `
+    <article class="history-item" data-tx="${escapeHtml(item.txHash)}">
+      <div><strong>@${escapeHtml(item.author)}</strong><span class="cast-snippet">${escapeHtml(shortText(item.castText, 70))}</span></div>
+      <a class="tx-badge" href="https://basescan.org/tx/${item.txHash}" target="_blank" rel="noopener noreferrer">${escapeHtml(formatTxHash(item.txHash))}</a>
+      <button class="poster-btn" data-index="${index}" title="Create poster" type="button">🖼</button>
     </article>
-  `).join('');
+  `).join('')}</div>`;
+  history.querySelectorAll<HTMLButtonElement>('.poster-btn').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const idx = Number(btn.dataset.index);
+      const item = state.history[idx];
+      if (!item) return;
+      state.posterUrl = posterDataUrl(item);
+      state.lastMintHash = item.txHash;
+      renderSuccessCard();
+      setStatus('Poster generated for history item. Scroll up to view.');
+    });
+  });
 }
 
 function syncInputs() {
@@ -352,9 +370,9 @@ async function shareMintSuccess() {
     return;
   }
 
-  const appUrl = `${window.location.origin}/?v=9`;
+  const appUrl = `${window.location.origin}/?v=10`;
   const txLine = `Base tx: https://basescan.org/tx/${state.lastMintHash}`;
-  const text = `Just minted a Farcaster cast as an NFT on Base with CastMint ✦\n\n"${shortText(state.castText, 120)}"\n— @${state.author || 'caster'}\n\n${txLine}\n\nMint yours:`;
+  const text = `Just minted a Farcaster cast as an NFT on Base ✦\n\n"${shortText(state.castText, 120)}"\n— @${state.author || 'caster'}\n\n${txLine}`;
 
   setStatus('Opening Farcaster share composer…');
   try {
@@ -362,7 +380,7 @@ async function shareMintSuccess() {
     setStatus('Share composer opened. Review and cast when ready.');
   } catch (err) {
     console.warn('Native share failed, using fallback:', err);
-    const fallbackText = `${text}\n${appUrl}`;
+    const fallbackText = `${text}\n\nMint yours with CastMint`;
     try { await navigator.clipboard.writeText(fallbackText); } catch { /* optional */ }
     window.open(`https://warpcast.com/~/compose?text=${encodeURIComponent(fallbackText)}`, '_blank', 'noopener,noreferrer');
     setStatus('Share text copied. Warpcast compose opened as fallback.');
