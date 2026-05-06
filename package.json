@@ -7,7 +7,7 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "test": "rm -rf dist-test && tsc -p tsconfig.test.json && node tests/cast-nft.test.mjs",
+    "deploy": "npm run build && wrangler deploy",
     "preview": "vite preview"
   },
   "dependencies": {
