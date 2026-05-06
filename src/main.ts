@@ -12,7 +12,7 @@ import {
   normalizeCastUrl,
 } from './castNft';
 
-const PUBLIC_FARCASTER_API = 'https://api.farcaster.xyz/v2';
+const PUBLIC_FARCASTER_API = 'https://api.warpcast.com/v2';
 const BASE_CHAIN_ID_HEX = '0x2105';
 const DEFAULT_MINT_CONTRACT_ADDRESS = '0xd70309f170C88012727A725079f37D621Cb679c3';
 const env = import.meta.env as { VITE_CASTMINT_CONTRACT_ADDRESS?: string; VITE_CASTMINT_FUNCTION_NAME?: string };
@@ -57,7 +57,7 @@ const state = {
   castUrl: '',
   minting: false,
   lastMintHash: '',
-  previewStyle: 'classic' as CastMintPreviewStyle,
+  previewStyle: 'neon' as CastMintPreviewStyle,
   detectedUser: '',
   isMiniApp: false,
   posterUrl: '',
@@ -147,6 +147,25 @@ function updatePreview() {
   }
 }
 
+async function warpcastGet(path: string) {
+  const response = await fetch(`${PUBLIC_FARCASTER_API}${path}`, {
+    method: 'GET',
+    headers: {
+      'Accept': 'application/json',
+    },
+    mode: 'cors',
+  });
+
+  if (!response.ok) {
+    if (response.status === 404) {
+      throw new Error('Cast or username not found');
+    }
+    throw new Error(`Warpcast API error: ${response.status}`);
+  }
+
+  return response.json();
+}
+
 async function fetchCastData(castUrl: string) {
   const normalized = normalizeCastUrl(castUrl);
   const castHash = getCastHashFromUrl(normalized);
@@ -159,30 +178,42 @@ async function fetchCastData(castUrl: string) {
   const requestId = ++castLookupRequest;
   
   try {
-    const response = await fetch(`${PUBLIC_FARCASTER_API}/cast-by-hash?hash=${castHash}`, {
-      method: 'GET',
-      headers: {
-        'Accept': 'application/json',
-      },
-      mode: 'cors',
-    });
-    
+    const userData = await warpcastGet(`/user-by-username?username=${encodeURIComponent(author)}`);
+    const fid = Number(userData?.result?.user?.fid);
+
     if (requestId !== castLookupRequest) {
       return null;
     }
 
-    if (!response.ok) {
-      if (response.status === 404) {
-        throw new Error('Cast not found');
-      }
-      throw new Error(`API error: ${response.status}`);
+    if (!Number.isInteger(fid) || fid <= 0) {
+      throw new Error('Unable to resolve cast author');
     }
 
-    const data = await response.json();
-    const cast = findCastInApiResponse(data, castHash);
+    const castPages: unknown[] = [];
+    let cursor = '';
+
+    for (let page = 0; page < 3; page += 1) {
+      const path = `/casts?fid=${fid}&limit=100${cursor ? `&cursor=${encodeURIComponent(cursor)}` : ''}`;
+      const data = await warpcastGet(path);
+      castPages.push(data);
+
+      if (requestId !== castLookupRequest) {
+        return null;
+      }
+
+      const nextCursor = data?.next?.cursor || data?.result?.next?.cursor || '';
+      if (!nextCursor) break;
+      cursor = nextCursor;
+    }
+
+    const allCasts = castPages.flatMap((page) => {
+      const typed = page as { result?: { casts?: unknown[] }; casts?: unknown[] };
+      return typed.result?.casts || typed.casts || [];
+    });
+    const cast = findCastInApiResponse({ casts: allCasts }, castHash);
 
     if (!cast || !cast.text) {
-      throw new Error('Cast has no text content');
+      throw new Error('Cast not found in recent author casts');
     }
 
     return {
@@ -195,7 +226,6 @@ async function fetchCastData(castUrl: string) {
       return null;
     }
     
-    // Better error messages
     if (error instanceof TypeError && error.message.includes('fetch')) {
       throw new Error('Network error - check your connection');
     }
