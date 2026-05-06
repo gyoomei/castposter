@@ -12,7 +12,7 @@ import {
   normalizeCastUrl,
 } from './castNft';
 
-const PUBLIC_FARCASTER_API = 'https://api.warpcast.com/v2';
+const PUBLIC_FARCASTER_API = '/api/warpcast';
 const BASE_CHAIN_ID_HEX = '0x2105';
 const DEFAULT_MINT_CONTRACT_ADDRESS = '0xd70309f170C88012727A725079f37D621Cb679c3';
 const env = import.meta.env as { VITE_CASTMINT_CONTRACT_ADDRESS?: string; VITE_CASTMINT_FUNCTION_NAME?: string };
@@ -153,7 +153,6 @@ async function warpcastGet(path: string) {
     headers: {
       'Accept': 'application/json',
     },
-    mode: 'cors',
   });
 
   if (!response.ok) {
