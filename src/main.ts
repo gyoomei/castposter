@@ -156,7 +156,7 @@ function updatePreview() {
 function updateFrameMeta() {
   const imageUrl = new URL('/api/share-card', window.location.origin);
   imageUrl.searchParams.set('style', state.previewStyle);
-  if (state.castText) imageUrl.searchParams.set('text', state.castText.slice(0, 220));
+  if (state.castText) imageUrl.searchParams.set('text', state.castText);
   if (state.author) imageUrl.searchParams.set('author', state.author);
 
   document.querySelector<HTMLMetaElement>('meta[property="og:image"]')?.setAttribute('content', imageUrl.toString());
@@ -477,7 +477,7 @@ async function handleShare() {
   const shareText = `I just minted ${castAuthor}'s Farcaster cast into a collectible NFT on Base 🎨`;
   const shareCardUrl = new URL('/api/share-card', window.location.origin);
   shareCardUrl.searchParams.set('style', state.previewStyle);
-  if (state.castText) shareCardUrl.searchParams.set('text', state.castText.slice(0, 220));
+  if (state.castText) shareCardUrl.searchParams.set('text', state.castText);
   if (state.author) shareCardUrl.searchParams.set('author', state.author);
 
   try {

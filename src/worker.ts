@@ -31,29 +31,81 @@ function escapeXml(value = ''): string {
     .replace(/'/g, '&apos;');
 }
 
-function wrapSvgText(value: string, maxCharsPerLine: number, maxLines: number): string[] {
+type ShareTextFit = {
+  lines: string[];
+  fontSize: number;
+  lineHeight: number;
+};
+
+function estimateTextUnits(value: string): number {
+  return Array.from(value).reduce((total, char) => {
+    if (/\s/.test(char)) return total + 0.32;
+    if (/[il.,'!|]/.test(char)) return total + 0.34;
+    if (/[MW@#%&]/.test(char)) return total + 0.9;
+    if (/[^\x00-\x7F]/.test(char)) return total + 0.95;
+    return total + 0.58;
+  }, 0);
+}
+
+function splitLongWord(word: string, maxUnits: number): string[] {
+  const chunks: string[] = [];
+  let current = '';
+  for (const char of Array.from(word)) {
+    if (current && estimateTextUnits(`${current}${char}`) > maxUnits) {
+      chunks.push(current);
+      current = char;
+    } else {
+      current += char;
+    }
+  }
+  if (current) chunks.push(current);
+  return chunks;
+}
+
+function wrapTextByUnits(value: string, maxUnits: number): string[] {
   const words = value.trim().replace(/\s+/g, ' ').split(' ').filter(Boolean);
   const lines: string[] = [];
   let current = '';
 
   for (const word of words) {
-    const next = current ? `${current} ${word}` : word;
-    if (next.length > maxCharsPerLine && current) {
-      lines.push(current);
-      current = word;
-    } else {
-      current = next;
+    const pieces = estimateTextUnits(word) > maxUnits ? splitLongWord(word, maxUnits) : [word];
+    for (const piece of pieces) {
+      const next = current ? `${current} ${piece}` : piece;
+      if (current && estimateTextUnits(next) > maxUnits) {
+        lines.push(current);
+        current = piece;
+      } else {
+        current = next;
+      }
     }
-
-    if (lines.length === maxLines) break;
   }
 
-  if (current && lines.length < maxLines) lines.push(current);
-  if (lines.length === maxLines && words.join(' ').length > lines.join(' ').length) {
-    lines[maxLines - 1] = `${lines[maxLines - 1].replace(/…$/, '').slice(0, Math.max(0, maxCharsPerLine - 1))}…`;
-  }
-
+  if (current) lines.push(current);
   return lines.length ? lines : ['I minted a Farcaster cast as an NFT'];
+}
+
+function fitShareText(value: string): ShareTextFit {
+  const boxWidth = 980;
+  const boxHeight = 300;
+  const ratio = 1.18;
+
+  for (let fontSize = 56; fontSize >= 26; fontSize -= 2) {
+    const lineHeight = Math.round(fontSize * ratio);
+    const maxLines = Math.max(1, Math.floor(boxHeight / lineHeight));
+    const maxUnits = boxWidth / fontSize;
+    const lines = wrapTextByUnits(value, maxUnits);
+    if (lines.length <= maxLines) return { lines, fontSize, lineHeight };
+  }
+
+  const fontSize = 26;
+  const lineHeight = Math.round(fontSize * ratio);
+  const maxLines = Math.max(1, Math.floor(boxHeight / lineHeight));
+  const lines = wrapTextByUnits(value, boxWidth / fontSize).slice(0, maxLines);
+  if (lines.length === maxLines) {
+    const last = lines[maxLines - 1] || '';
+    lines[maxLines - 1] = `${last.slice(0, Math.max(0, last.length - 1)).replace(/…$/, '')}…`;
+  }
+  return { lines, fontSize, lineHeight };
 }
 
 function buildShareCardSvg(requestUrl: URL): string {
@@ -61,8 +113,9 @@ function buildShareCardSvg(requestUrl: URL): string {
   const rawAuthor = (requestUrl.searchParams.get('author') || '').replace(/^@+/, '').trim();
   const authorLabel = rawAuthor ? `@${rawAuthor}` : 'Farcaster creator';
   const style = requestUrl.searchParams.get('style') || 'neon';
-  const lines = wrapSvgText(castText, 32, 5)
-    .map((line, index) => `<text x="110" y="${325 + index * 62}">${escapeXml(line)}</text>`)
+  const textFit = fitShareText(castText);
+  const lines = textFit.lines
+    .map((line, index) => `<text x="110" y="${325 + index * textFit.lineHeight}">${escapeXml(line)}</text>`)
     .join('\n      ');
 
   const accent = style === 'poster' ? '#fde047' : style === 'minimal' ? '#38bdf8' : '#55e7ff';
@@ -80,7 +133,7 @@ function buildShareCardSvg(requestUrl: URL): string {
   <text x="110" y="205" fill="#9aa4bd" font-family="Arial,sans-serif" font-size="28" font-weight="800" letter-spacing="3">FARCASTER CAST NFT • BASE</text>
   <rect x="110" y="232" width="410" height="54" rx="27" fill="rgba(255,255,255,.09)" stroke="${accent}" stroke-opacity=".42"/>
   <text x="136" y="268" fill="${accent}" font-family="Arial,sans-serif" font-size="25" font-weight="900">CAST BY ${escapeXml(authorLabel)}</text>
-  <g fill="#ffffff" font-family="Arial,sans-serif" font-size="50" font-weight="900">
+  <g fill="#ffffff" font-family="Arial,sans-serif" font-size="${textFit.fontSize}" font-weight="900">
       ${lines}
   </g>
   <rect x="110" y="660" width="255" height="4" rx="2" fill="${accent}"/>

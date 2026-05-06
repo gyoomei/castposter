@@ -144,30 +144,87 @@ function toBase64(value: string): string {
 }
 
 
-function wrapSvgText(value: string, maxCharsPerLine: number, maxLines: number): string[] {
+type SvgTextFit = {
+  lines: string[];
+  fontSize: number;
+  lineHeight: number;
+};
+
+type SvgTextFitOptions = {
+  boxWidth: number;
+  boxHeight: number;
+  maxFontSize: number;
+  minFontSize: number;
+  lineHeightRatio?: number;
+};
+
+function estimateTextUnits(value: string): number {
+  return Array.from(value).reduce((total, char) => {
+    if (/\s/.test(char)) return total + 0.32;
+    if (/[il.,'!|]/.test(char)) return total + 0.34;
+    if (/[MW@#%&]/.test(char)) return total + 0.9;
+    if (/[^\x00-\x7F]/.test(char)) return total + 0.95;
+    return total + 0.58;
+  }, 0);
+}
+
+function splitLongWord(word: string, maxUnits: number): string[] {
+  const chunks: string[] = [];
+  let current = '';
+  for (const char of Array.from(word)) {
+    if (current && estimateTextUnits(`${current}${char}`) > maxUnits) {
+      chunks.push(current);
+      current = char;
+    } else {
+      current += char;
+    }
+  }
+  if (current) chunks.push(current);
+  return chunks;
+}
+
+function wrapTextByUnits(value: string, maxUnits: number): string[] {
   const words = value.trim().replace(/\s+/g, ' ').split(' ').filter(Boolean);
   const lines: string[] = [];
   let current = '';
 
   for (const word of words) {
-    const next = current ? `${current} ${word}` : word;
-    if (next.length > maxCharsPerLine && current) {
-      lines.push(current);
-      current = word;
-    } else {
-      current = next;
+    const pieces = estimateTextUnits(word) > maxUnits ? splitLongWord(word, maxUnits) : [word];
+    for (const piece of pieces) {
+      const next = current ? `${current} ${piece}` : piece;
+      if (current && estimateTextUnits(next) > maxUnits) {
+        lines.push(current);
+        current = piece;
+      } else {
+        current = next;
+      }
     }
-
-    if (lines.length === maxLines) break;
   }
 
-  if (current && lines.length < maxLines) lines.push(current);
-
-  if (lines.length === maxLines && words.join(' ').length > lines.join(' ').length) {
-    lines[maxLines - 1] = `${lines[maxLines - 1].replace(/…$/, '').slice(0, Math.max(0, maxCharsPerLine - 1))}…`;
-  }
-
+  if (current) lines.push(current);
   return lines.length ? lines : ['Paste a cast URL to mint.'];
+}
+
+function fitSvgText(value: string, options: SvgTextFitOptions): SvgTextFit {
+  const ratio = options.lineHeightRatio || 1.18;
+  for (let fontSize = options.maxFontSize; fontSize >= options.minFontSize; fontSize -= 2) {
+    const lineHeight = Math.round(fontSize * ratio);
+    const maxLines = Math.max(1, Math.floor(options.boxHeight / lineHeight));
+    const maxUnits = options.boxWidth / fontSize;
+    const lines = wrapTextByUnits(value, maxUnits);
+    if (lines.length <= maxLines) return { lines, fontSize, lineHeight };
+  }
+
+  const fontSize = options.minFontSize;
+  const lineHeight = Math.round(fontSize * ratio);
+  const maxLines = Math.max(1, Math.floor(options.boxHeight / lineHeight));
+  const maxUnits = options.boxWidth / fontSize;
+  const lines = wrapTextByUnits(value, maxUnits).slice(0, maxLines);
+  if (lines.length === maxLines) {
+    const last = lines[maxLines - 1] || '';
+    lines[maxLines - 1] = `${last.slice(0, Math.max(0, last.length - 1)).replace(/…$/, '')}…`;
+  }
+  return { lines, fontSize, lineHeight };
 }
 
 function buildTextLines(lines: string[], x: number, startY: number, lineHeight: number): string {
@@ -176,9 +233,9 @@ function buildTextLines(lines: string[], x: number, startY: number, lineHeight: 
     .join('\n  ');
 }
 
-function buildMinimalImageSvg(cleanAuthor: string, seed: string, shortCast: string): string {
-  const castLines = wrapSvgText(shortCast, 25, 7);
-  const castTextLines = buildTextLines(castLines, 126, 565, 72);
+function buildMinimalImageSvg(cleanAuthor: string, seed: string, cleanCast: string): string {
+  const castFit = fitSvgText(cleanCast, { boxWidth: 900, boxHeight: 540, maxFontSize: 66, minFontSize: 34 });
+  const castTextLines = buildTextLines(castFit.lines, 126, 565, castFit.lineHeight);
   const safeAuthor = escapeXml(cleanAuthor);
   const safeSeed = escapeXml(seed);
   return `<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="1600" viewBox="0 0 1200 1600">
@@ -190,7 +247,7 @@ function buildMinimalImageSvg(cleanAuthor: string, seed: string, shortCast: stri
   <text x="126" y="236" fill="#64748b" font-family="Arial,sans-serif" font-size="24" font-weight="800">MINIMAL EDITION • BASE</text>
   <line x1="126" y1="315" x2="1074" y2="315" stroke="#e2e8f0" stroke-width="3"/>
   <text x="126" y="445" fill="#cbd5e1" font-family="Georgia,serif" font-size="156" font-weight="900">“</text>
-  <g fill="#0f172a" font-family="Arial,sans-serif" font-size="62" font-weight="900" dominant-baseline="text-before-edge">
+  <g fill="#0f172a" font-family="Arial,sans-serif" font-size="${castFit.fontSize}" font-weight="900" dominant-baseline="text-before-edge">
   ${castTextLines}
   </g>
   <rect x="126" y="1210" width="948" height="156" rx="34" fill="#f1f5f9"/>
@@ -200,9 +257,10 @@ function buildMinimalImageSvg(cleanAuthor: string, seed: string, shortCast: stri
 </svg>`;
 }
 
-function buildPosterImageSvg(cleanAuthor: string, seed: string, shortCast: string): string {
-  const castLines = wrapSvgText(shortCast.toUpperCase(), 20, 8);
-  const castTextLines = buildTextLines(castLines, 126, 505, 72);
+function buildPosterImageSvg(cleanAuthor: string, seed: string, cleanCast: string): string {
+  const posterCast = cleanCast.toUpperCase();
+  const castFit = fitSvgText(posterCast, { boxWidth: 900, boxHeight: 600, maxFontSize: 72, minFontSize: 32 });
+  const castTextLines = buildTextLines(castFit.lines, 126, 505, castFit.lineHeight);
   const safeAuthor = escapeXml(cleanAuthor);
   const safeSeed = escapeXml(seed);
   return `<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="1600" viewBox="0 0 1200 1600">
@@ -216,7 +274,7 @@ function buildPosterImageSvg(cleanAuthor: string, seed: string, shortCast: strin
   <text x="126" y="210" fill="#fde047" font-family="Arial Black,Arial,sans-serif" font-size="86" font-weight="900" letter-spacing="-2">CAST</text>
   <text x="126" y="304" fill="#fff" font-family="Arial Black,Arial,sans-serif" font-size="86" font-weight="900" letter-spacing="-2">POSTER</text>
   <rect x="126" y="348" width="364" height="18" fill="url(#posterAccent)"/>
-  <g fill="#ffffff" font-family="Arial Black,Arial,sans-serif" font-size="66" font-weight="900" dominant-baseline="text-before-edge">
+  <g fill="#ffffff" font-family="Arial Black,Arial,sans-serif" font-size="${castFit.fontSize}" font-weight="900" dominant-baseline="text-before-edge">
   ${castTextLines}
   </g>
   <rect x="126" y="1230" width="948" height="170" fill="#fde047"/>
@@ -226,9 +284,9 @@ function buildPosterImageSvg(cleanAuthor: string, seed: string, shortCast: strin
 </svg>`;
 }
 
-function buildNeonImageSvg(cleanAuthor: string, seed: string, shortCast: string): string {
-  const castLines = wrapSvgText(shortCast, 24, 7);
-  const castTextLines = buildTextLines(castLines, 128, 650, 68);
+function buildNeonImageSvg(cleanAuthor: string, seed: string, cleanCast: string): string {
+  const castFit = fitSvgText(cleanCast, { boxWidth: 900, boxHeight: 520, maxFontSize: 60, minFontSize: 30 });
+  const castTextLines = buildTextLines(castFit.lines, 128, 650, castFit.lineHeight);
   const safeAuthor = escapeXml(cleanAuthor);
   const safeSeed = escapeXml(seed);
   return `<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="1600" viewBox="0 0 1200 1600">
@@ -250,7 +308,7 @@ function buildNeonImageSvg(cleanAuthor: string, seed: string, shortCast: string)
   <text x="848" y="172" fill="#ffd166" font-family="Arial,sans-serif" font-size="38" font-weight="900">#${safeSeed}</text>
   <text x="126" y="246" fill="#55e7ff" font-family="Arial,sans-serif" font-size="22" font-weight="800" letter-spacing="4">MINTED ON BASE</text>
   <text x="130" y="510" fill="rgba(255,255,255,.18)" font-family="Georgia,serif" font-size="240" font-weight="900">“</text>
-  <g fill="#ffffff" font-family="Arial,sans-serif" font-size="58" font-weight="900" dominant-baseline="text-before-edge">
+  <g fill="#ffffff" font-family="Arial,sans-serif" font-size="${castFit.fontSize}" font-weight="900" dominant-baseline="text-before-edge">
   ${castTextLines}
   </g>
   <text x="126" y="1330" fill="#9aa4bd" font-family="Arial,sans-serif" font-size="26" font-weight="800" letter-spacing="2">CREATOR</text>
@@ -268,11 +326,10 @@ export function buildCastMintImageSvg(input: CastNftInput): string {
   const cleanAuthor = input.author.trim().replace(/^@/, '') || 'caster';
   const style = getPreviewStyle(input.style);
   const seed = getCastNftSeed(`${style}:${cleanAuthor}:${cleanCast}`);
-  const shortCast = cleanCast.length > 190 ? `${cleanCast.slice(0, 187)}…` : cleanCast;
 
-  if (style === 'minimal') return buildMinimalImageSvg(cleanAuthor, seed, shortCast);
-  if (style === 'poster') return buildPosterImageSvg(cleanAuthor, seed, shortCast);
-  return buildNeonImageSvg(cleanAuthor, seed, shortCast);
+  if (style === 'minimal') return buildMinimalImageSvg(cleanAuthor, seed, cleanCast);
+  if (style === 'poster') return buildPosterImageSvg(cleanAuthor, seed, cleanCast);
+  return buildNeonImageSvg(cleanAuthor, seed, cleanCast);
 }
 
 export function buildCastMintImageDataUri(input: CastNftInput): string {
