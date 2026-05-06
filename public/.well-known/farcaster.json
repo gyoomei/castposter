@@ -1,27 +1,27 @@
 {
   "accountAssociation": {
     "header": "eyJmaWQiOjI0MTQ3MCwidHlwZSI6ImN1c3RvZHkiLCJrZXkiOiIweDVmOWVjRDkwMzI2OEIyODlkZjBEM2IxZjU0RTI5MzI5NzRGRDQxZEUifQ",
-    "payload": "eyJkb21haW4iOiJjYXN0cG9zdGVyLnZlcmNlbC5hcHAifQ",
-    "signature": "scgFX8SI1Ug/gpRWkYgt9s7dSiU4t0eDA24X8S+t4lAekUcuhw/1mzG8rDc0+FfYPqQprbDeTKMmKE+qjKEdBBw="
+    "payload": "eyJkb21haW4iOiJjYXN0cG9zdGVyLnNheWxpZ29vZDEyMy53b3JrZXJzLmRldiJ9",
+    "signature": "TT9CRwaWvSksZRfEhf62tHIe3QY9/9hxo9Dw+TCbGqdJ4I225q7+AGC9F/OABW7LswXj4eHhibkuAnDRa+Eh4hw="
   },
   "miniapp": {
     "version": "1",
     "name": "CastMint",
-    "iconUrl": "https://castposter.vercel.app/icon.png?v=8",
-    "homeUrl": "https://castposter.vercel.app/?v=8",
-    "imageUrl": "https://castposter.vercel.app/og.png?v=8",
+    "iconUrl": "https://castposter.sayligood123.workers.dev/icon.png",
+    "homeUrl": "https://castposter.sayligood123.workers.dev",
+    "imageUrl": "https://castposter.sayligood123.workers.dev/og.png",
     "buttonTitle": "Create Cast NFT",
-    "splashImageUrl": "https://castposter.vercel.app/icon.png?v=8",
-    "splashBackgroundColor": "#070816"
+    "splashImageUrl": "https://castposter.sayligood123.workers.dev/icon.png",
+    "splashBackgroundColor": "#02040a"
   },
   "frame": {
     "version": "1",
     "name": "CastMint",
-    "iconUrl": "https://castposter.vercel.app/icon.png?v=8",
-    "homeUrl": "https://castposter.vercel.app/?v=8",
-    "imageUrl": "https://castposter.vercel.app/og.png?v=8",
+    "iconUrl": "https://castposter.sayligood123.workers.dev/icon.png",
+    "homeUrl": "https://castposter.sayligood123.workers.dev",
+    "imageUrl": "https://castposter.sayligood123.workers.dev/og.png",
     "buttonTitle": "Create Cast NFT",
-    "splashImageUrl": "https://castposter.vercel.app/icon.png?v=8",
-    "splashBackgroundColor": "#070816"
+    "splashImageUrl": "https://castposter.sayligood123.workers.dev/icon.png",
+    "splashBackgroundColor": "#02040a"
   }
 }
