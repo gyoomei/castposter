@@ -1026,6 +1026,84 @@
     .confetti:nth-child(4n) { width: 8px; height: 8px; }
     .confetti:nth-child(5n) { width: 6px; height: 6px; }
 
+    /* 3D Tilt Effect */
+    .preview-card {
+      transform-style: preserve-3d;
+      transition: transform 0.1s ease-out;
+    }
+    .preview-card:hover {
+      transform: perspective(1000px) rotateX(var(--tilt-x, 0deg)) rotateY(var(--tilt-y, 0deg)) scale(1.02);
+    }
+
+    /* History Panel */
+    .history-panel {
+      position: fixed;
+      right: 24px;
+      bottom: 24px;
+      width: 320px;
+      max-height: 400px;
+      background: rgba(20, 20, 30, .95);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, .1);
+      border-radius: 16px;
+      padding: 20px;
+      z-index: 1000;
+      animation: slideInRight .3s cubic-bezier(.22, 1, .36, 1);
+      overflow-y: auto;
+    }
+    .history-panel.collapsed {
+      width: 60px;
+      height: 60px;
+      padding: 0;
+      overflow: hidden;
+      cursor: pointer;
+    }
+    .history-toggle {
+      position: absolute;
+      top: 16px;
+      right: 16px;
+      background: none;
+      border: none;
+      color: rgba(255, 255, 255, .7);
+      cursor: pointer;
+      font-size: 20px;
+      padding: 4px;
+      transition: color .2s;
+    }
+    .history-toggle:hover {
+      color: #fff;
+    }
+    .history-title {
+      font-size: 16px;
+      font-weight: 700;
+      margin-bottom: 16px;
+      color: #fff;
+    }
+    .history-item {
+      padding: 12px;
+      background: rgba(255, 255, 255, .03);
+      border: 1px solid rgba(255, 255, 255, .08);
+      border-radius: 8px;
+      margin-bottom: 8px;
+      cursor: pointer;
+      transition: all .2s;
+    }
+    .history-item:hover {
+      background: rgba(255, 255, 255, .06);
+      border-color: rgba(255, 255, 255, .15);
+      transform: translateX(-4px);
+    }
+    .history-item-hash {
+      font-size: 12px;
+      font-family: 'Courier New', monospace;
+      color: var(--cyan);
+      margin-bottom: 4px;
+    }
+    .history-item-time {
+      font-size: 11px;
+      color: rgba(255, 255, 255, .5);
+    }
+
     /* Keyframes */
     @keyframes riseIn {
       from { opacity: 0; transform: translateY(24px) scale(.97); }
@@ -1055,6 +1133,10 @@
     @keyframes confettiFall {
       0% { transform: translateY(0) rotate(0deg); opacity: 1; }
       100% { transform: translateY(100vh) rotate(720deg); opacity: 0; }
+    }
+    @keyframes slideInRight {
+      from { opacity: 0; transform: translateX(100px); }
+      to { opacity: 1; transform: translateX(0); }
     }
     @keyframes confettiFall {
       0% { transform: translateY(-10vh) rotate(0deg); opacity: 1; }

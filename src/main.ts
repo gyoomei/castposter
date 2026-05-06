@@ -110,6 +110,92 @@ function triggerConfetti() {
   }
 }
 
+function init3DTilt() {
+  const previewCard = document.getElementById('previewCard');
+  if (!previewCard) return;
+
+  previewCard.addEventListener('mousemove', (e) => {
+    const rect = previewCard.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    const centerX = rect.width / 2;
+    const centerY = rect.height / 2;
+    const rotateX = ((y - centerY) / centerY) * -10;
+    const rotateY = ((x - centerX) / centerX) * 10;
+    
+    previewCard.style.setProperty('--tilt-x', `${rotateX}deg`);
+    previewCard.style.setProperty('--tilt-y', `${rotateY}deg`);
+  });
+
+  previewCard.addEventListener('mouseleave', () => {
+    previewCard.style.setProperty('--tilt-x', '0deg');
+    previewCard.style.setProperty('--tilt-y', '0deg');
+  });
+}
+
+function renderHistoryPanel() {
+  let historyPanel = document.getElementById('historyPanel');
+  if (!historyPanel) {
+    historyPanel = document.createElement('div');
+    historyPanel.id = 'historyPanel';
+    historyPanel.className = 'history-panel collapsed';
+    document.body.appendChild(historyPanel);
+  }
+
+  const isCollapsed = historyPanel.classList.contains('collapsed');
+  
+  if (isCollapsed) {
+    historyPanel.innerHTML = `
+      <button class="history-toggle" aria-label="Open history">📜</button>
+    `;
+    historyPanel.onclick = () => {
+      historyPanel.classList.remove('collapsed');
+      renderHistoryPanel();
+    };
+  } else {
+    const items = state.history.slice(0, 5).map(item => `
+      <div class="history-item" data-hash="${item.hash}">
+        <div class="history-item-hash">${formatTxHash(item.hash)}</div>
+        <div class="history-item-time">${timeAgo(item.timestamp)}</div>
+      </div>
+    `).join('');
+
+    historyPanel.innerHTML = `
+      <button class="history-toggle" aria-label="Close history">×</button>
+      <div class="history-title">Recent Mints</div>
+      ${items || '<div style="color: rgba(255,255,255,.5); font-size: 13px;">No mints yet</div>'}
+    `;
+    historyPanel.onclick = null;
+
+    const toggle = historyPanel.querySelector('.history-toggle');
+    toggle?.addEventListener('click', (e) => {
+      e.stopPropagation();
+      historyPanel.classList.add('collapsed');
+      renderHistoryPanel();
+    });
+
+    historyPanel.querySelectorAll('.history-item').forEach(item => {
+      item.addEventListener('click', () => {
+        const hash = item.getAttribute('data-hash');
+        if (hash) {
+          window.open(`https://basescan.org/tx/${hash}`, '_blank');
+        }
+      });
+    });
+  }
+}
+
+function timeAgo(timestamp: number): string {
+  const seconds = Math.floor((Date.now() - timestamp) / 1000);
+  if (seconds < 60) return 'just now';
+  const minutes = Math.floor(seconds / 60);
+  if (minutes < 60) return `${minutes}m ago`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `${hours}h ago`;
+  const days = Math.floor(hours / 24);
+  return `${days}d ago`;
+}
+
 function escapeHtml(text: string): string {
   return text
     .replace(/&/g, '&amp;')
@@ -581,6 +667,7 @@ async function mintCastNft() {
     state.posterUrl = '';
     addMintHistoryItem(hash);
     renderPreview();
+    renderHistoryPanel();
     setStatus(`Mint success on Base: ${formatTxHash(hash)}. Success card, history, and share unlocked.`);
     
     // Trigger confetti and success toast
@@ -737,6 +824,8 @@ async function initMiniApp() {
     console.warn('Farcaster context unavailable outside Mini App:', err);
   }
   renderApp();
+  init3DTilt();
+  renderHistoryPanel();
   void checkMintCompatibility();
   try { sdk.back.onback = async () => { try { await sdk.actions.close(); } catch { if (window.history.length > 1) window.history.back(); } }; await sdk.back.show(); }
   catch (err) { console.warn('Farcaster back handling unavailable outside Mini App:', err); }
