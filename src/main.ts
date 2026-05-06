@@ -153,7 +153,7 @@ function updatePreview() {
   updateFrameMeta();
 }
 
-const APP_VERSION = '21';
+const APP_VERSION = '22';
 
 function applyShareParams(url: URL, includeTextFallback = false): URL {
   const castHash = getCastHashFromUrl(state.castUrl);
@@ -188,7 +188,7 @@ function updateFrameMeta() {
     version: '1',
     imageUrl: imageUrl.toString(),
     button: {
-      title: 'Create Cast NFT',
+      title: 'Mint This Cast',
       action: {
         type: 'launch_frame',
         name: 'CastMint',

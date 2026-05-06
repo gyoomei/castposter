@@ -255,22 +255,26 @@ function escapeHtml(value = ''): string {
   return escapeXml(value).replace(/'/g, '&#39;');
 }
 
+function escapeMetaJson(value: string): string {
+  return value.replace(/'/g, '&#39;');
+}
+
 function sharePageHtml(requestUrl: URL): string {
   const params = requestUrl.searchParams.toString();
   const imageUrl = new URL(`/api/share-card${params ? `?${params}` : ''}`, requestUrl.origin).toString();
   const appUrl = new URL('/', requestUrl.origin);
-  appUrl.searchParams.set('v', requestUrl.searchParams.get('v') || '21');
+  appUrl.searchParams.set('v', requestUrl.searchParams.get('v') || '22');
   const appUrlString = appUrl.toString();
   const miniappPayload = JSON.stringify({
     version: '1',
     imageUrl,
     button: {
-      title: 'Launch CastMint',
+      title: 'Mint This Cast',
       action: {
         type: 'launch_frame',
         name: 'CastMint',
         url: appUrlString,
-        splashImageUrl: `${requestUrl.origin}/icon.png?v=${requestUrl.searchParams.get('v') || '21'}`,
+        splashImageUrl: `${requestUrl.origin}/icon.png?v=${requestUrl.searchParams.get('v') || '22'}`,
         splashBackgroundColor: '#02040a',
       },
     },
@@ -286,9 +290,12 @@ function sharePageHtml(requestUrl: URL): string {
   <meta property="og:title" content="CastMint — Cast to NFT">
   <meta property="og:description" content="Turn any Farcaster cast into a collectible NFT on Base.">
   <meta property="og:image" content="${escapeHtml(imageUrl)}">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="800">
   <meta name="twitter:card" content="summary_large_image">
-  <meta name="fc:miniapp" content='${escapeHtml(miniappPayload)}'>
-  <meta name="fc:frame" content='${escapeHtml(miniappPayload)}'>
+  <meta name="twitter:image" content="${escapeHtml(imageUrl)}">
+  <meta name="fc:miniapp" content='${escapeMetaJson(miniappPayload)}'>
+  <meta name="fc:frame" content='${escapeMetaJson(miniappPayload)}'>
   <link rel="canonical" href="${escapeHtml(appUrlString)}">
 </head>
 <body style="margin:0;background:#02040a;color:#f8fafc;font-family:Inter,system-ui,sans-serif;display:grid;min-height:100vh;place-items:center;text-align:center;padding:24px;">
