@@ -38,12 +38,19 @@
 
     * { box-sizing: border-box; margin: 0; padding: 0; }
 
+    html, body {
+      width: 100%;
+      overflow-x: hidden;
+      position: relative;
+      scroll-behavior: smooth;
+      -webkit-overflow-scrolling: touch;
+    }
+
     body {
       min-height: 100vh;
-      overflow-x: hidden;
       background: var(--bg-deep);
       color: var(--text);
-      position: relative;
+      touch-action: pan-y;
     }
 
     /* Animated mesh gradient background */
@@ -105,17 +112,26 @@
     button, input { font: inherit; }
 
     /* Main layout */
-    .app-shell {
+    .container {
       position: relative;
       z-index: 1;
-      width: min(100%, 1200px);
+      width: 100%;
+      max-width: 1200px;
       min-height: 100vh;
       margin: 0 auto;
-      padding: 24px;
+      padding: 16px;
       display: grid;
-      grid-template-columns: 1fr 1.05fr;
-      gap: 24px;
+      grid-template-columns: 1fr;
+      gap: 16px;
       align-items: start;
+    }
+
+    @media (min-width: 768px) {
+      .container {
+        padding: 24px;
+        grid-template-columns: 1fr 1.05fr;
+        gap: 24px;
+      }
     }
 
     /* Glass panel base */
@@ -131,6 +147,9 @@
         inset 0 1px 0 rgba(255,255,255,.08);
       position: relative;
       overflow: hidden;
+      width: 100%;
+      max-width: 100%;
+      box-sizing: border-box;
     }
 
     .glass-panel::before {
@@ -305,6 +324,8 @@
       display: grid;
       grid-template-columns: 1fr;
       gap: 20px;
+      width: 100%;
+      max-width: 100%;
     }
 
     /* Preview card */
@@ -475,12 +496,14 @@
     }
     input {
       width: 100%;
+      max-width: 100%;
       border: 1px solid var(--line);
       border-radius: 16px;
       color: var(--text);
       background: rgba(255,255,255,.04);
       padding: 14px 16px;
       outline: 0;
+      box-sizing: border-box;
       font-size: 14px;
       font-weight: 500;
       transition: all .2s ease;
@@ -503,6 +526,9 @@
       cursor: pointer;
       transition: all .2s cubic-bezier(.22, 1, .36, 1);
       letter-spacing: .02em;
+      width: 100%;
+      max-width: 100%;
+      box-sizing: border-box;
     }
     button:active { transform: translateY(1px) scale(.99); }
 
@@ -1184,14 +1210,14 @@
 
     /* Responsive */
     @media (max-width: 960px) {
-      .app-shell { grid-template-columns: 1fr; padding: 16px; }
+      .container { grid-template-columns: 1fr; padding: 16px; }
       .hero-panel { min-height: auto; gap: 40px; }
       .workspace { grid-template-columns: 1fr; }
       .stats-row { gap: 20px; }
       .stat strong { font-size: 22px; }
     }
     @media (max-width: 520px) {
-      .app-shell { padding: 12px; gap: 16px; }
+      .container { padding: 12px; gap: 16px; }
       .glass-panel { border-radius: 22px; }
       .hero-panel, .preview-card, .control-card { padding: 20px; }
       .preview-card { min-height: 380px; }
@@ -1208,7 +1234,7 @@
     <span></span><span></span><span></span><span></span>
   </div>
   <div id="app">
-    <main class="app-shell">
+    <main class="container">
       <section class="hero-panel glass-panel">
         <div class="badge">Loading CastMint…</div>
       </section>

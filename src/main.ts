@@ -691,7 +691,7 @@ function renderApp() {
   if (!app) return;
 
   app.innerHTML = `
-    <main class="app-shell">
+    <main class="container">
       <section class="hero-panel glass-panel">
         <nav class="topbar">
           <div class="brand-mark">✦</div>
