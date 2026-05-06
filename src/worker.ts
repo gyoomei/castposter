@@ -23,6 +23,7 @@ const SHARE_IMAGE_WIDTH = 1200;
 const SHARE_IMAGE_HEIGHT = 800;
 const WARPCAST_PAGE_LIMIT = 50;
 const SHARE_CARD_CACHE_SECONDS = 300;
+const SHARE_CARD_VERSION = '23';
 
 function escapeXml(value = ''): string {
   return value
@@ -241,14 +242,18 @@ function jsonResponse(payload: unknown, status = 200): Response {
   }));
 }
 
-function svgResponse(svg: string): Response {
-  return withCors(new Response(svg, {
+function imageResponse(body: BodyInit, contentType: string): Response {
+  return withCors(new Response(body, {
     status: 200,
     headers: {
-      'Content-Type': 'image/svg+xml; charset=utf-8',
+      'Content-Type': contentType,
       'Cache-Control': `public, max-age=${SHARE_CARD_CACHE_SECONDS}`,
     },
   }));
+}
+
+function svgResponse(svg: string): Response {
+  return imageResponse(svg, 'image/svg+xml; charset=utf-8');
 }
 
 function escapeHtml(value = ''): string {
@@ -259,11 +264,17 @@ function escapeMetaJson(value: string): string {
   return value.replace(/'/g, '&#39;');
 }
 
+function buildFallbackPngUrl(requestUrl: URL): string {
+  return new URL(`/og.png?v=${requestUrl.searchParams.get('v') || SHARE_CARD_VERSION}`, requestUrl.origin).toString();
+}
+
 function sharePageHtml(requestUrl: URL): string {
-  const params = requestUrl.searchParams.toString();
-  const imageUrl = new URL(`/api/share-card${params ? `?${params}` : ''}`, requestUrl.origin).toString();
+  const params = new URLSearchParams(requestUrl.searchParams);
+  params.set('v', requestUrl.searchParams.get('v') || SHARE_CARD_VERSION);
+  const imageUrl = buildFallbackPngUrl(requestUrl);
+  const svgImageUrl = new URL(`/api/share-card?${params.toString()}`, requestUrl.origin).toString();
   const appUrl = new URL('/', requestUrl.origin);
-  appUrl.searchParams.set('v', requestUrl.searchParams.get('v') || '22');
+  appUrl.searchParams.set('v', requestUrl.searchParams.get('v') || SHARE_CARD_VERSION);
   const appUrlString = appUrl.toString();
   const miniappPayload = JSON.stringify({
     version: '1',
@@ -274,7 +285,7 @@ function sharePageHtml(requestUrl: URL): string {
         type: 'launch_frame',
         name: 'CastMint',
         url: appUrlString,
-        splashImageUrl: `${requestUrl.origin}/icon.png?v=${requestUrl.searchParams.get('v') || '22'}`,
+        splashImageUrl: `${requestUrl.origin}/icon.png?v=${requestUrl.searchParams.get('v') || SHARE_CARD_VERSION}`,
         splashBackgroundColor: '#02040a',
       },
     },
@@ -286,6 +297,7 @@ function sharePageHtml(requestUrl: URL): string {
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>CastMint — Cast to NFT</title>
+  <meta http-equiv="refresh" content="0; url=${escapeHtml(appUrlString)}">
   <meta name="description" content="Turn any Farcaster cast into a collectible NFT on Base.">
   <meta property="og:title" content="CastMint — Cast to NFT">
   <meta property="og:description" content="Turn any Farcaster cast into a collectible NFT on Base.">
@@ -304,6 +316,7 @@ function sharePageHtml(requestUrl: URL): string {
     <h1>CastMint</h1>
     <p>Turn any Farcaster cast into a collectible NFT on Base.</p>
     <p><a href="${escapeHtml(appUrlString)}" style="color:#22d3ee;font-weight:800;">Launch CastMint</a></p>
+    <p style="font-size:12px;color:#64748b;">SVG card: <a href="${escapeHtml(svgImageUrl)}" style="color:#22d3ee;">open dynamic card</a></p>
   </main>
 </body>
 </html>`;

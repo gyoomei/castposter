@@ -153,7 +153,7 @@ function updatePreview() {
   updateFrameMeta();
 }
 
-const APP_VERSION = '22';
+const APP_VERSION = '23';
 
 function applyShareParams(url: URL, includeTextFallback = false): URL {
   const castHash = getCastHashFromUrl(state.castUrl);
@@ -171,16 +171,12 @@ function applyShareParams(url: URL, includeTextFallback = false): URL {
   return url;
 }
 
-function buildShareCardUrl(includeTextFallback = false): URL {
-  return applyShareParams(new URL('/api/share-card', window.location.origin), includeTextFallback);
-}
-
 function buildSharePageUrl(includeTextFallback = false): URL {
   return applyShareParams(new URL('/share', window.location.origin), includeTextFallback);
 }
 
 function updateFrameMeta() {
-  const imageUrl = buildShareCardUrl(true);
+  const imageUrl = new URL(`/og.png?v=${APP_VERSION}`, window.location.origin);
 
   document.querySelector<HTMLMetaElement>('meta[property="og:image"]')?.setAttribute('content', imageUrl.toString());
 
