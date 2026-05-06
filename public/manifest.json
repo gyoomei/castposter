@@ -1,0 +1,18 @@
+{
+  "accountAssociation": {
+    "header": "eyJmaWQiOjI0MTQ3MCwidHlwZSI6ImN1c3RvZHkiLCJrZXkiOiIweDVmOWVjRDkwMzI2OEIyODlkZjBEM2IxZjU0RTI5MzI5NzRGRDQxZEUifQ",
+    "payload": "eyJkb21haW4iOiJjYXN0cG9zdGVyLnNheWxpZ29vZDEyMy53b3JrZXJzLmRldiJ9",
+    "signature": "TT9CRwaWvSksZRfEhf62tHIe3QY9/9hxo9Dw+TCbGqdJ4I225q7+AGC9F/OABW7LswXj4eHhibkuAnDRa+Eh4hw="
+  },
+  "frame": {
+    "version": "1",
+    "name": "CastMint",
+    "iconUrl": "https://castposter.sayligood123.workers.dev/icon.png",
+    "homeUrl": "https://castposter.sayligood123.workers.dev",
+    "imageUrl": "https://castposter.sayligood123.workers.dev/og.png",
+    "buttonTitle": "Create Cast NFT",
+    "splashImageUrl": "https://castposter.sayligood123.workers.dev/icon.png",
+    "splashBackgroundColor": "#02040a",
+    "webhookUrl": "https://castposter.sayligood123.workers.dev/api/webhook"
+  }
+}
