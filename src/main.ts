@@ -169,21 +169,30 @@ async function fetchCastData(castUrl: string) {
   const requestId = ++castLookupRequest;
   
   try {
-    const response = await fetch(`${PUBLIC_FARCASTER_API}/cast-by-hash?hash=${castHash}`);
+    const response = await fetch(`${PUBLIC_FARCASTER_API}/cast-by-hash?hash=${castHash}`, {
+      method: 'GET',
+      headers: {
+        'Accept': 'application/json',
+      },
+      mode: 'cors',
+    });
     
     if (requestId !== castLookupRequest) {
       return null;
     }
 
     if (!response.ok) {
-      throw new Error('Failed to fetch cast data');
+      if (response.status === 404) {
+        throw new Error('Cast not found');
+      }
+      throw new Error(`API error: ${response.status}`);
     }
 
     const data = await response.json();
     const cast = findCastInApiResponse(data);
 
     if (!cast || !cast.text) {
-      throw new Error('Cast not found or has no text');
+      throw new Error('Cast has no text content');
     }
 
     return {
@@ -195,6 +204,12 @@ async function fetchCastData(castUrl: string) {
     if (requestId !== castLookupRequest) {
       return null;
     }
+    
+    // Better error messages
+    if (error instanceof TypeError && error.message.includes('fetch')) {
+      throw new Error('Network error - check your connection');
+    }
+    
     throw error;
   }
 }
