@@ -878,6 +878,154 @@
       animation: scaleIn .35s cubic-bezier(.34, 1.56, .64, 1) both;
     }
 
+    /* Confetti */
+    .confetti-container {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 9999;
+      overflow: hidden;
+    }
+    .confetti {
+      position: absolute;
+      width: 10px;
+      height: 10px;
+      background: var(--cyan);
+      animation: confettiFall 3s ease-out forwards;
+    }
+    .confetti:nth-child(2n) { background: var(--pink); }
+    .confetti:nth-child(3n) { background: var(--yellow); }
+    .confetti:nth-child(4n) { width: 8px; height: 8px; }
+    .confetti:nth-child(5n) { width: 6px; height: 6px; }
+
+    /* Toast notifications */
+    .toast {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      max-width: 420px;
+      padding: 16px 20px;
+      background: rgba(15, 18, 28, .95);
+      border: 1px solid rgba(255, 255, 255, .12);
+      border-radius: 12px;
+      backdrop-filter: blur(12px);
+      box-shadow: 0 8px 32px rgba(0, 0, 0, .4);
+      z-index: 9998;
+      animation: toastSlideIn .3s cubic-bezier(.22, 1, .36, 1);
+    }
+    .toast.error {
+      border-color: rgba(255, 91, 91, .4);
+      background: rgba(40, 15, 15, .95);
+    }
+    .toast.success {
+      border-color: rgba(85, 231, 255, .4);
+      background: rgba(15, 28, 35, .95);
+    }
+    .toast-content {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+    }
+    .toast-icon {
+      font-size: 20px;
+      line-height: 1;
+      flex-shrink: 0;
+    }
+    .toast-message {
+      flex: 1;
+      font-size: 14px;
+      line-height: 1.5;
+      color: rgba(255, 255, 255, .9);
+    }
+    .toast-close {
+      background: none;
+      border: none;
+      color: rgba(255, 255, 255, .5);
+      cursor: pointer;
+      padding: 0;
+      font-size: 18px;
+      line-height: 1;
+      flex-shrink: 0;
+    }
+    .toast-close:hover { color: rgba(255, 255, 255, .9); }
+
+    /* Toast notifications */
+    .toast {
+      position: fixed;
+      top: 24px;
+      right: 24px;
+      max-width: 420px;
+      padding: 16px 20px;
+      background: rgba(20, 20, 30, .95);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, .1);
+      border-radius: 12px;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, .4);
+      z-index: 9999;
+      animation: toastSlideIn .3s cubic-bezier(.22, 1, .36, 1);
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+    }
+    .toast.error {
+      border-left: 3px solid #ff5555;
+    }
+    .toast.success {
+      border-left: 3px solid #55e7ff;
+    }
+    .toast-icon {
+      font-size: 20px;
+      line-height: 1;
+      flex-shrink: 0;
+    }
+    .toast-content {
+      flex: 1;
+    }
+    .toast-title {
+      font-weight: 700;
+      font-size: 14px;
+      margin-bottom: 4px;
+      color: #fff;
+    }
+    .toast-message {
+      font-size: 13px;
+      color: rgba(255, 255, 255, .7);
+      line-height: 1.4;
+    }
+    .toast-close {
+      background: none;
+      border: none;
+      color: rgba(255, 255, 255, .5);
+      cursor: pointer;
+      padding: 0;
+      font-size: 18px;
+      line-height: 1;
+      transition: color .2s;
+    }
+    .toast-close:hover {
+      color: #fff;
+    }
+
+    /* Confetti */
+    .confetti {
+      position: fixed;
+      width: 10px;
+      height: 10px;
+      background: var(--cyan);
+      position: fixed;
+      top: -10px;
+      z-index: 9998;
+      animation: confettiFall 3s linear forwards;
+      pointer-events: none;
+    }
+    .confetti:nth-child(2n) { background: var(--pink); }
+    .confetti:nth-child(3n) { background: var(--yellow); }
+    .confetti:nth-child(4n) { width: 8px; height: 8px; }
+    .confetti:nth-child(5n) { width: 6px; height: 6px; }
+
     /* Keyframes */
     @keyframes riseIn {
       from { opacity: 0; transform: translateY(24px) scale(.97); }
@@ -900,6 +1048,22 @@
       100% { background-position: -200% 0; }
     }
     @keyframes spin { to { transform: rotate(360deg); } }
+    @keyframes toastSlideIn {
+      from { opacity: 0; transform: translateX(100px); }
+      to { opacity: 1; transform: translateX(0); }
+    }
+    @keyframes confettiFall {
+      0% { transform: translateY(0) rotate(0deg); opacity: 1; }
+      100% { transform: translateY(100vh) rotate(720deg); opacity: 0; }
+    }
+    @keyframes confettiFall {
+      0% { transform: translateY(-10vh) rotate(0deg); opacity: 1; }
+      100% { transform: translateY(110vh) rotate(720deg); opacity: 0; }
+    }
+    @keyframes toastSlideIn {
+      from { transform: translateX(120%); opacity: 0; }
+      to { transform: translateX(0); opacity: 1; }
+    }
     @keyframes bgPulse {
       0% { opacity: .8; transform: scale(1); }
       50% { opacity: 1; transform: scale(1.02); }

@@ -73,8 +73,45 @@ const state = {
 
 let castLookupRequest = 0;
 
-function escapeHtml(value: string) {
-  return value
+function showToast(type: 'success' | 'error', title: string, message: string) {
+  const toast = document.createElement('div');
+  toast.className = `toast ${type}`;
+  toast.innerHTML = `
+    <div class="toast-icon">${type === 'success' ? '✓' : '✕'}</div>
+    <div class="toast-content">
+      <div class="toast-title">${escapeHtml(title)}</div>
+      <div class="toast-message">${escapeHtml(message)}</div>
+    </div>
+    <button class="toast-close" aria-label="Close">×</button>
+  `;
+  document.body.appendChild(toast);
+  
+  const closeBtn = toast.querySelector('.toast-close');
+  const remove = () => {
+    toast.style.animation = 'fadeOut .2s forwards';
+    setTimeout(() => toast.remove(), 200);
+  };
+  
+  closeBtn?.addEventListener('click', remove);
+  setTimeout(remove, 5000);
+}
+
+function triggerConfetti() {
+  for (let i = 0; i < 50; i++) {
+    setTimeout(() => {
+      const confetti = document.createElement('div');
+      confetti.className = 'confetti';
+      confetti.style.left = `${Math.random() * 100}%`;
+      confetti.style.animationDelay = `${Math.random() * 0.5}s`;
+      confetti.style.animationDuration = `${2 + Math.random() * 2}s`;
+      document.body.appendChild(confetti);
+      setTimeout(() => confetti.remove(), 4000);
+    }, i * 30);
+  }
+}
+
+function escapeHtml(text: string): string {
+  return text
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;')
@@ -545,10 +582,17 @@ async function mintCastNft() {
     addMintHistoryItem(hash);
     renderPreview();
     setStatus(`Mint success on Base: ${formatTxHash(hash)}. Success card, history, and share unlocked.`);
+    
+    // Trigger confetti and success toast
+    triggerConfetti();
+    showToast('success', 'Mint Successful!', `NFT minted on Base: ${formatTxHash(hash)}`);
   } catch (err) {
     console.warn('Mint failed:', err);
     const message = err instanceof Error ? err.message : 'Wallet rejected or transaction failed';
     setStatus(`Mint failed: ${message}`);
+    
+    // Show error toast
+    showToast('error', 'Mint Failed', message);
   } finally {
     state.minting = false;
     syncActionButtons();
@@ -662,7 +706,9 @@ function bindEvents() {
     } catch (err) {
       if (requestId !== castLookupRequest) return;
       console.warn('Cast URL lookup failed:', err);
-      setStatus('Cast URL saved. Public lookup is unavailable right now, try again in a moment.');
+      const message = err instanceof Error ? err.message : 'Public lookup is unavailable right now';
+      setStatus(`Cast URL saved. ${message}`);
+      showToast('error', 'Failed to Load Cast', message);
       renderPreview(); // restore preview on error
     }
   };
