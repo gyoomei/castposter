@@ -1,17 +1,13 @@
 import { sdk } from '@farcaster/miniapp-sdk';
-import { decodeFunctionResult, encodeFunctionData, formatEther, keccak256, toBytes } from 'viem';
+import { decodeFunctionResult, encodeFunctionData, keccak256, toBytes } from 'viem';
 import {
   buildCastMintTokenUri,
-  CASTMINT_PREVIEW_STYLES,
   CastMintHistoryItem,
   CastMintPreviewStyle,
   createMintHistoryItem,
   extractCastAuthorFromUrl,
   findCastInApiResponse,
-  formatTxHash,
   getCastHashFromUrl,
-  getPreviewStyle,
-  getCastNftSeed,
   isValidEvmAddress,
   normalizeCastUrl,
 } from './castNft';
@@ -69,12 +65,6 @@ const state = {
 };
 
 let castLookupRequest = 0;
-
-function escapeHtml(text: string): string {
-  const div = document.createElement('div');
-  div.textContent = text;
-  return div.innerHTML;
-}
 
 function showToast(message: string, type: 'success' | 'error' = 'success') {
   const toast = document.createElement('div');
@@ -189,7 +179,7 @@ async function fetchCastData(castUrl: string) {
     }
 
     const data = await response.json();
-    const cast = findCastInApiResponse(data);
+    const cast = findCastInApiResponse(data, castHash);
 
     if (!cast || !cast.text) {
       throw new Error('Cast has no text content');
@@ -197,7 +187,7 @@ async function fetchCastData(castUrl: string) {
 
     return {
       text: cast.text,
-      author: cast.author?.username || author,
+      author: cast.author || author,
       hash: castHash,
     };
   } catch (error) {
@@ -280,9 +270,16 @@ async function handleMint() {
   state.minting = true;
 
   try {
-    await sdk.wallet.switchChain({ chainId: BASE_CHAIN_ID_HEX });
-
     const provider = await sdk.wallet.getEthereumProvider() as EthereumProvider;
+    if (!provider) {
+      throw new Error('Wallet provider unavailable');
+    }
+
+    await provider.request({
+      method: 'wallet_switchEthereumChain',
+      params: [{ chainId: BASE_CHAIN_ID_HEX }],
+    });
+
     const accounts = await provider.request({ method: 'eth_requestAccounts' }) as string[];
     const userAddress = accounts[0];
 
@@ -337,8 +334,11 @@ async function handleMint() {
       return;
     }
 
-    const seed = getCastNftSeed(state.castUrl);
-    const tokenUri = buildCastMintTokenUri(state.castText, state.author, state.previewStyle, seed);
+    const tokenUri = buildCastMintTokenUri({
+      castText: state.castText,
+      author: state.author,
+      castUrl: state.castUrl,
+    });
 
     const data = encodeFunctionData({
       abi: MINT_ABI,
@@ -359,11 +359,13 @@ async function handleMint() {
     state.lastMintHash = txHash;
 
     const historyItem = createMintHistoryItem(
-      state.castText,
-      state.author,
-      state.previewStyle,
-      txHash,
-      seed
+      {
+        castText: state.castText,
+        author: state.author,
+        castUrl: state.castUrl,
+        txHash,
+        style: state.previewStyle,
+      }
     );
     saveHistory(historyItem);
 
@@ -440,7 +442,7 @@ function handleNew() {
 
 function handleClose() {
   if (state.isMiniApp) {
-    sdk.close();
+    sdk.actions.close();
   } else {
     window.history.back();
   }
@@ -448,7 +450,7 @@ function handleClose() {
 
 async function init() {
   try {
-    await sdk.ready();
+    await sdk.actions.ready();
     state.isMiniApp = true;
     
     const context = await sdk.context;
