@@ -3,5 +3,7 @@
   "name": "castposter",
   "compatibility_date": "2026-05-06",
   "compatibility_flags": ["nodejs_compat"],
-  "pages_build_output_dir": "./dist"
+  "assets": {
+    "directory": "./dist"
+  }
 }
