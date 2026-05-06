@@ -7,12 +7,12 @@
   "frame": {
     "version": "1",
     "name": "CastMint",
-    "iconUrl": "https://castposter.sayligood123.workers.dev/icon.png",
-    "homeUrl": "https://castposter.sayligood123.workers.dev",
-    "imageUrl": "https://castposter.sayligood123.workers.dev/og.png",
+    "iconUrl": "https://gyoomei.github.io/castposter/icon.png",
+    "homeUrl": "https://gyoomei.github.io/castposter",
+    "imageUrl": "https://gyoomei.github.io/castposter/og.png",
     "buttonTitle": "Create Cast NFT",
-    "splashImageUrl": "https://castposter.sayligood123.workers.dev/icon.png",
+    "splashImageUrl": "https://gyoomei.github.io/castposter/icon.png",
     "splashBackgroundColor": "#02040a",
-    "webhookUrl": "https://castposter.sayligood123.workers.dev/api/webhook"
+    "webhookUrl": "https://gyoomei.github.io/castposter/api/webhook"
   }
 }
