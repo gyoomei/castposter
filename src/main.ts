@@ -13,6 +13,7 @@ import {
 } from './castNft';
 
 const PUBLIC_FARCASTER_API = '/api/warpcast';
+const WARPCAST_PAGE_LIMIT = 50;
 const BASE_CHAIN_ID_HEX = '0x2105';
 const DEFAULT_MINT_CONTRACT_ADDRESS = '0xd70309f170C88012727A725079f37D621Cb679c3';
 const env = import.meta.env as { VITE_CASTMINT_CONTRACT_ADDRESS?: string; VITE_CASTMINT_FUNCTION_NAME?: string };
@@ -129,6 +130,14 @@ function updatePreview() {
   const castAuthorName = document.getElementById('castAuthorName');
   const castAuthorUsername = document.getElementById('castAuthorUsername');
   const previewStyle = document.getElementById('previewStyle');
+  const previewCard = document.getElementById('previewCard');
+
+  if (previewCard) previewCard.dataset.style = state.previewStyle;
+
+  if (previewStyle) {
+    const styleName = state.previewStyle.charAt(0).toUpperCase() + state.previewStyle.slice(1);
+    previewStyle.textContent = styleName;
+  }
 
   if (!state.castText || !state.author) {
     if (placeholder) placeholder.hidden = false;
@@ -141,10 +150,6 @@ function updatePreview() {
   if (castText) castText.textContent = state.castText;
   if (castAuthorName) castAuthorName.textContent = state.author;
   if (castAuthorUsername) castAuthorUsername.textContent = `@${state.author}`;
-  if (previewStyle) {
-    const styleName = state.previewStyle.charAt(0).toUpperCase() + state.previewStyle.slice(1);
-    previewStyle.textContent = styleName;
-  }
 }
 
 async function warpcastGet(path: string) {
@@ -156,9 +161,13 @@ async function warpcastGet(path: string) {
   });
 
   if (!response.ok) {
+    const body = await response.text().catch(() => '');
+    console.warn('Warpcast API error:', response.status, body);
+
     if (response.status === 404) {
       throw new Error('Cast or username not found');
     }
+
     throw new Error(`Warpcast API error: ${response.status}`);
   }
 
@@ -192,7 +201,7 @@ async function fetchCastData(castUrl: string) {
     let cursor = '';
 
     for (let page = 0; page < 3; page += 1) {
-      const path = `/casts?fid=${fid}&limit=100${cursor ? `&cursor=${encodeURIComponent(cursor)}` : ''}`;
+      const path = `/casts?fid=${fid}&limit=${WARPCAST_PAGE_LIMIT}${cursor ? `&cursor=${encodeURIComponent(cursor)}` : ''}`;
       const data = await warpcastGet(path);
       castPages.push(data);
 
@@ -367,6 +376,7 @@ async function handleMint() {
       castText: state.castText,
       author: state.author,
       castUrl: state.castUrl,
+      style: state.previewStyle,
     });
 
     const data = encodeFunctionData({

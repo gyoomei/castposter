@@ -2,6 +2,7 @@ export type CastNftInput = {
   castText: string;
   author: string;
   castUrl?: string;
+  style?: CastMintPreviewStyle;
 };
 
 export type CastNftMetadata = {
@@ -142,12 +143,48 @@ function toBase64(value: string): string {
   return btoa(binary);
 }
 
-export function buildCastMintImageSvg(input: CastNftInput): string {
-  const cleanCast = input.castText.trim().replace(/\s+/g, ' ') || 'Paste a cast URL to mint.';
-  const cleanAuthor = input.author.trim().replace(/^@/, '') || 'caster';
-  const seed = getCastNftSeed(`${cleanAuthor}:${cleanCast}`);
-  const shortCast = cleanCast.length > 190 ? `${cleanCast.slice(0, 187)}…` : cleanCast;
+function buildMinimalImageSvg(cleanAuthor: string, seed: string, shortCast: string): string {
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="1600" viewBox="0 0 1200 1600">
+  <rect width="1200" height="1600" rx="72" fill="#f8fafc"/>
+  <rect x="78" y="86" width="1044" height="1428" rx="56" fill="#ffffff" stroke="#dbe4ef" stroke-width="4"/>
+  <circle cx="1010" cy="210" r="88" fill="#e0f2fe"/>
+  <circle cx="922" cy="294" r="44" fill="#fef3c7"/>
+  <text x="126" y="180" fill="#0f172a" font-family="Inter,Arial,sans-serif" font-size="44" font-weight="900" letter-spacing="7">CASTMINT</text>
+  <text x="126" y="236" fill="#64748b" font-family="Inter,Arial,sans-serif" font-size="24" font-weight="800">MINIMAL EDITION • BASE</text>
+  <line x1="126" y1="315" x2="1074" y2="315" stroke="#e2e8f0" stroke-width="3"/>
+  <foreignObject x="126" y="510" width="948" height="530">
+    <div xmlns="http://www.w3.org/1999/xhtml" style="color:#0f172a;font-family:Inter,Arial,sans-serif;font-size:68px;line-height:1.15;font-weight:860;letter-spacing:-3px;overflow:hidden;">${escapeXml(shortCast)}</div>
+  </foreignObject>
+  <rect x="126" y="1210" width="948" height="156" rx="34" fill="#f1f5f9"/>
+  <text x="172" y="1278" fill="#64748b" font-family="Inter,Arial,sans-serif" font-size="24" font-weight="800" letter-spacing="2">CREATOR</text>
+  <text x="172" y="1338" fill="#0f172a" font-family="Inter,Arial,sans-serif" font-size="52" font-weight="950">@${escapeXml(cleanAuthor)}</text>
+  <text x="126" y="1454" fill="#94a3b8" font-family="Inter,Arial,sans-serif" font-size="26" font-weight="800">#${escapeXml(seed)}</text>
+</svg>`;
+}
 
+function buildPosterImageSvg(cleanAuthor: string, seed: string, shortCast: string): string {
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="1600" viewBox="0 0 1200 1600">
+  <defs>
+    <linearGradient id="posterBg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ff4d00"/><stop offset=".48" stop-color="#7c2d12"/><stop offset="1" stop-color="#050505"/></linearGradient>
+    <linearGradient id="posterAccent" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#fde047"/><stop offset="1" stop-color="#fb7185"/></linearGradient>
+  </defs>
+  <rect width="1200" height="1600" fill="url(#posterBg)"/>
+  <rect x="72" y="80" width="1056" height="1440" fill="none" stroke="#fde047" stroke-width="10"/>
+  <rect x="112" y="120" width="976" height="1360" fill="rgba(0,0,0,.42)"/>
+  <text x="126" y="210" fill="#fde047" font-family="Impact,Arial Black,Inter,sans-serif" font-size="86" font-weight="900" letter-spacing="-2">CAST</text>
+  <text x="126" y="304" fill="#fff" font-family="Impact,Arial Black,Inter,sans-serif" font-size="86" font-weight="900" letter-spacing="-2">POSTER</text>
+  <rect x="126" y="348" width="364" height="18" fill="url(#posterAccent)"/>
+  <foreignObject x="126" y="505" width="948" height="610">
+    <div xmlns="http://www.w3.org/1999/xhtml" style="color:#fff;font-family:Impact,Arial Black,Inter,sans-serif;font-size:78px;line-height:1.03;font-weight:900;letter-spacing:-2px;text-transform:uppercase;text-shadow:8px 8px 0 rgba(0,0,0,.35);overflow:hidden;">${escapeXml(shortCast)}</div>
+  </foreignObject>
+  <rect x="126" y="1230" width="948" height="170" fill="#fde047"/>
+  <text x="166" y="1302" fill="#111" font-family="Inter,Arial,sans-serif" font-size="28" font-weight="950" letter-spacing="3">ORIGINAL CASTER</text>
+  <text x="166" y="1372" fill="#111" font-family="Inter,Arial,sans-serif" font-size="54" font-weight="950">@${escapeXml(cleanAuthor)}</text>
+  <text x="126" y="1468" fill="#fff" font-family="Inter,Arial,sans-serif" font-size="30" font-weight="900">BASE • #${escapeXml(seed)}</text>
+</svg>`;
+}
+
+function buildNeonImageSvg(cleanAuthor: string, seed: string, shortCast: string): string {
   return `<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="1600" viewBox="0 0 1200 1600">
   <defs>
     <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#02040a"/><stop offset=".35" stop-color="#0b1224"/><stop offset=".70" stop-color="#1a1035"/><stop offset="1" stop-color="#3a0a3d"/></linearGradient>
@@ -194,6 +231,18 @@ export function buildCastMintImageSvg(input: CastNftInput): string {
 </svg>`;
 }
 
+export function buildCastMintImageSvg(input: CastNftInput): string {
+  const cleanCast = input.castText.trim().replace(/\s+/g, ' ') || 'Paste a cast URL to mint.';
+  const cleanAuthor = input.author.trim().replace(/^@/, '') || 'caster';
+  const style = getPreviewStyle(input.style);
+  const seed = getCastNftSeed(`${style}:${cleanAuthor}:${cleanCast}`);
+  const shortCast = cleanCast.length > 190 ? `${cleanCast.slice(0, 187)}…` : cleanCast;
+
+  if (style === 'minimal') return buildMinimalImageSvg(cleanAuthor, seed, shortCast);
+  if (style === 'poster') return buildPosterImageSvg(cleanAuthor, seed, shortCast);
+  return buildNeonImageSvg(cleanAuthor, seed, shortCast);
+}
+
 export function buildCastMintTokenUri(input: CastNftInput): string {
   const metadata = buildCastNftMetadata(input);
   const svg = buildCastMintImageSvg(input);
@@ -226,7 +275,8 @@ export function findCastInApiResponse(payload: unknown, targetHash: string): Cas
 export function buildCastNftMetadata(input: CastNftInput): CastNftMetadata {
   const cleanCast = input.castText.trim().replace(/\s+/g, ' ');
   const cleanAuthor = input.author.trim().replace(/^@/, '') || 'caster';
-  const seed = getCastNftSeed(`${cleanAuthor}:${cleanCast}`);
+  const style = getPreviewStyle(input.style);
+  const seed = getCastNftSeed(`${style}:${cleanAuthor}:${cleanCast}`);
 
   return {
     name: `CastMint #${seed}`,
@@ -236,6 +286,7 @@ export function buildCastNftMetadata(input: CastNftInput): CastNftMetadata {
       { trait_type: 'Source', value: 'Farcaster Cast' },
       { trait_type: 'Creator', value: `@${cleanAuthor}` },
       { trait_type: 'Cast Seed', value: seed },
+      { trait_type: 'Style', value: style.charAt(0).toUpperCase() + style.slice(1) },
       { trait_type: 'Chain', value: 'Base' },
     ],
   };

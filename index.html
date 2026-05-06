@@ -183,6 +183,34 @@
       animation: shimmer 4.5s ease-in-out infinite;
       pointer-events: none; z-index: 3;
     }
+
+    .preview[data-style="minimal"] {
+      background: linear-gradient(145deg, #f8fafc, #ffffff);
+      border-color: rgba(148, 163, 184, .55);
+      box-shadow: 0 30px 80px rgba(15,23,42,.28), inset 0 1px 0 rgba(255,255,255,.80);
+    }
+    .preview[data-style="minimal"]::before { background: linear-gradient(135deg, rgba(14,165,233,.55), rgba(226,232,240,.65), rgba(251,191,36,.40)); }
+    .preview[data-style="minimal"]::after { opacity: .18; }
+    .preview[data-style="minimal"] .preview-badge,
+    .preview[data-style="minimal"] .cast-author { background: rgba(15,23,42,.055); border-color: rgba(15,23,42,.10); color: #334155; }
+    .preview[data-style="minimal"] .cast-text,
+    .preview[data-style="minimal"] .cast-author-name { color: #0f172a; text-shadow: none; }
+    .preview[data-style="minimal"] .cast-author-username,
+    .preview[data-style="minimal"] .preview-footer-item,
+    .preview[data-style="minimal"] .preview-placeholder { color: #64748b; }
+    .preview[data-style="minimal"] .preview-placeholder::before { color: #0ea5e9; text-shadow: 0 0 22px rgba(14,165,233,.28); }
+
+    .preview[data-style="poster"] {
+      background: linear-gradient(145deg, #ff4d00 0%, #7c2d12 42%, #050505 100%);
+      border-color: rgba(253,224,71,.70);
+      box-shadow: 0 38px 92px rgba(124,45,18,.48), 0 0 54px rgba(251,113,133,.22), inset 0 1px 0 rgba(255,255,255,.12);
+    }
+    .preview[data-style="poster"]::before { background: linear-gradient(135deg, #fde047, transparent 42%, #fb7185); }
+    .preview[data-style="poster"] .preview-badge,
+    .preview[data-style="poster"] .cast-author { background: rgba(0,0,0,.48); border-color: rgba(253,224,71,.36); }
+    .preview[data-style="poster"] .cast-text { font-weight: 950; text-transform: uppercase; letter-spacing: -.055em; text-shadow: 4px 4px 0 rgba(0,0,0,.34); }
+    .preview[data-style="poster"] .preview-placeholder::before { color: #fde047; text-shadow: 0 0 26px rgba(253,224,71,.7); }
+
     .preview-top, .preview-footer, .preview-content { position: relative; z-index: 4; }
     .preview-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; }
     .preview-badge {
