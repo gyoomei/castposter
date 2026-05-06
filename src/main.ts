@@ -148,8 +148,36 @@ function updatePreview() {
   if (placeholder) placeholder.hidden = true;
   if (castPreview) castPreview.hidden = false;
   if (castText) castText.textContent = state.castText;
-  if (castAuthorName) castAuthorName.textContent = state.author;
-  if (castAuthorUsername) castAuthorUsername.textContent = `@${state.author}`;
+  if (castAuthorName) castAuthorName.textContent = `@${state.author}`;
+  if (castAuthorUsername) castAuthorUsername.textContent = state.castUrl ? 'Original cast loaded' : 'Ready to mint';
+  updateFrameMeta();
+}
+
+function updateFrameMeta() {
+  const imageUrl = new URL('/api/share-card', window.location.origin);
+  imageUrl.searchParams.set('style', state.previewStyle);
+  if (state.castText) imageUrl.searchParams.set('text', state.castText.slice(0, 220));
+
+  document.querySelector<HTMLMetaElement>('meta[property="og:image"]')?.setAttribute('content', imageUrl.toString());
+
+  const framePayload = {
+    version: '1',
+    imageUrl: imageUrl.toString(),
+    button: {
+      title: 'Create Cast NFT',
+      action: {
+        type: 'launch_frame',
+        name: 'CastMint',
+        url: `${window.location.origin}/?v=17`,
+        splashImageUrl: `${window.location.origin}/icon.png?v=17`,
+        splashBackgroundColor: '#02040a',
+      },
+    },
+  };
+
+  const serialized = JSON.stringify(framePayload);
+  document.querySelector<HTMLMetaElement>('meta[name="fc:miniapp"]')?.setAttribute('content', serialized);
+  document.querySelector<HTMLMetaElement>('meta[name="fc:frame"]')?.setAttribute('content', serialized);
 }
 
 async function warpcastGet(path: string) {
@@ -396,7 +424,6 @@ async function handleMint() {
     }) as string;
 
     state.lastMintHash = txHash;
-
     const historyItem = createMintHistoryItem(
       {
         castText: state.castText,
@@ -439,21 +466,43 @@ function handleStyleChange(e: Event) {
   updatePreview();
 }
 
-function handleShare() {
+async function handleShare() {
   if (!state.lastMintHash) {
     showToast('No mint to share', 'error');
     return;
   }
 
-  const shareText = `Just minted a Farcaster cast as an NFT on Base! 🎨\n\nTx: https://basescan.org/tx/${state.lastMintHash}`;
-  
-  if (navigator.share) {
-    navigator.share({ text: shareText }).catch(() => {});
-  } else {
-    navigator.clipboard.writeText(shareText).then(() => {
-      showToast('Link copied to clipboard!');
-    });
+  const shareText = `I just minted this Farcaster cast into a collectible NFT on Base 🎨${state.castText ? `\n\n“${state.castText}”` : ''}`;
+  const shareCardUrl = new URL('/api/share-card', window.location.origin);
+  shareCardUrl.searchParams.set('style', state.previewStyle);
+  if (state.castText) shareCardUrl.searchParams.set('text', state.castText.slice(0, 220));
+
+  try {
+    if (state.isMiniApp) {
+      await sdk.actions.composeCast({
+        text: shareText,
+        embeds: [shareCardUrl.toString()],
+      });
+      return;
+    }
+  } catch (error) {
+    console.warn('Farcaster share failed:', error);
   }
+
+  if (navigator.share) {
+    try {
+      await navigator.share({
+        title: 'CastMint NFT',
+        text: shareText,
+        url: shareCardUrl.toString(),
+      });
+      return;
+    } catch {
+      return;
+    }
+  }
+
+  window.open(`https://warpcast.com/~/compose?text=${encodeURIComponent(shareText)}&embeds[]=${encodeURIComponent(shareCardUrl.toString())}`, '_blank', 'noopener,noreferrer');
 }
 
 function handleNew() {

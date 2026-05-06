@@ -170,13 +170,15 @@ function wrapSvgText(value: string, maxCharsPerLine: number, maxLines: number): 
   return lines.length ? lines : ['Paste a cast URL to mint.'];
 }
 
-function buildTspans(lines: string[], x: number, lineHeight: number): string {
-  return lines.map((line, index) => `<tspan x="${x}" dy="${index === 0 ? 0 : lineHeight}">${escapeXml(line)}</tspan>`).join('');
+function buildTextLines(lines: string[], x: number, startY: number, lineHeight: number): string {
+  return lines
+    .map((line, index) => `<text x="${x}" y="${startY + (index * lineHeight)}">${escapeXml(line)}</text>`)
+    .join('\n  ');
 }
 
 function buildMinimalImageSvg(cleanAuthor: string, seed: string, shortCast: string): string {
   const castLines = wrapSvgText(shortCast, 25, 7);
-  const castTspans = buildTspans(castLines, 126, 72);
+  const castTextLines = buildTextLines(castLines, 126, 565, 72);
   const safeAuthor = escapeXml(cleanAuthor);
   const safeSeed = escapeXml(seed);
   return `<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="1600" viewBox="0 0 1200 1600">
@@ -188,7 +190,9 @@ function buildMinimalImageSvg(cleanAuthor: string, seed: string, shortCast: stri
   <text x="126" y="236" fill="#64748b" font-family="Arial,sans-serif" font-size="24" font-weight="800">MINIMAL EDITION • BASE</text>
   <line x1="126" y1="315" x2="1074" y2="315" stroke="#e2e8f0" stroke-width="3"/>
   <text x="126" y="445" fill="#cbd5e1" font-family="Georgia,serif" font-size="156" font-weight="900">“</text>
-  <text x="126" y="565" fill="#0f172a" font-family="Arial,sans-serif" font-size="62" font-weight="900">${castTspans}</text>
+  <g fill="#0f172a" font-family="Arial,sans-serif" font-size="62" font-weight="900" dominant-baseline="text-before-edge">
+  ${castTextLines}
+  </g>
   <rect x="126" y="1210" width="948" height="156" rx="34" fill="#f1f5f9"/>
   <text x="172" y="1278" fill="#64748b" font-family="Arial,sans-serif" font-size="24" font-weight="800" letter-spacing="2">CREATOR</text>
   <text x="172" y="1338" fill="#0f172a" font-family="Arial,sans-serif" font-size="52" font-weight="950">@${safeAuthor}</text>
@@ -198,7 +202,7 @@ function buildMinimalImageSvg(cleanAuthor: string, seed: string, shortCast: stri
 
 function buildPosterImageSvg(cleanAuthor: string, seed: string, shortCast: string): string {
   const castLines = wrapSvgText(shortCast.toUpperCase(), 20, 8);
-  const castTspans = buildTspans(castLines, 126, 72);
+  const castTextLines = buildTextLines(castLines, 126, 505, 72);
   const safeAuthor = escapeXml(cleanAuthor);
   const safeSeed = escapeXml(seed);
   return `<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="1600" viewBox="0 0 1200 1600">
@@ -212,7 +216,9 @@ function buildPosterImageSvg(cleanAuthor: string, seed: string, shortCast: strin
   <text x="126" y="210" fill="#fde047" font-family="Arial Black,Arial,sans-serif" font-size="86" font-weight="900" letter-spacing="-2">CAST</text>
   <text x="126" y="304" fill="#fff" font-family="Arial Black,Arial,sans-serif" font-size="86" font-weight="900" letter-spacing="-2">POSTER</text>
   <rect x="126" y="348" width="364" height="18" fill="url(#posterAccent)"/>
-  <text x="126" y="505" fill="#ffffff" font-family="Arial Black,Arial,sans-serif" font-size="66" font-weight="900">${castTspans}</text>
+  <g fill="#ffffff" font-family="Arial Black,Arial,sans-serif" font-size="66" font-weight="900" dominant-baseline="text-before-edge">
+  ${castTextLines}
+  </g>
   <rect x="126" y="1230" width="948" height="170" fill="#fde047"/>
   <text x="166" y="1302" fill="#111" font-family="Arial,sans-serif" font-size="28" font-weight="950" letter-spacing="3">ORIGINAL CASTER</text>
   <text x="166" y="1372" fill="#111" font-family="Arial,sans-serif" font-size="54" font-weight="950">@${safeAuthor}</text>
@@ -222,7 +228,7 @@ function buildPosterImageSvg(cleanAuthor: string, seed: string, shortCast: strin
 
 function buildNeonImageSvg(cleanAuthor: string, seed: string, shortCast: string): string {
   const castLines = wrapSvgText(shortCast, 24, 7);
-  const castTspans = buildTspans(castLines, 128, 68);
+  const castTextLines = buildTextLines(castLines, 128, 650, 68);
   const safeAuthor = escapeXml(cleanAuthor);
   const safeSeed = escapeXml(seed);
   return `<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="1600" viewBox="0 0 1200 1600">
@@ -244,7 +250,9 @@ function buildNeonImageSvg(cleanAuthor: string, seed: string, shortCast: string)
   <text x="848" y="172" fill="#ffd166" font-family="Arial,sans-serif" font-size="38" font-weight="900">#${safeSeed}</text>
   <text x="126" y="246" fill="#55e7ff" font-family="Arial,sans-serif" font-size="22" font-weight="800" letter-spacing="4">MINTED ON BASE</text>
   <text x="130" y="510" fill="rgba(255,255,255,.18)" font-family="Georgia,serif" font-size="240" font-weight="900">“</text>
-  <text x="128" y="650" fill="#ffffff" font-family="Arial,sans-serif" font-size="58" font-weight="900">${castTspans}</text>
+  <g fill="#ffffff" font-family="Arial,sans-serif" font-size="58" font-weight="900" dominant-baseline="text-before-edge">
+  ${castTextLines}
+  </g>
   <text x="126" y="1330" fill="#9aa4bd" font-family="Arial,sans-serif" font-size="26" font-weight="800" letter-spacing="2">CREATOR</text>
   <text x="126" y="1396" fill="#fff" font-family="Arial,sans-serif" font-size="52" font-weight="950">@${safeAuthor}</text>
   <text x="876" y="1330" fill="#9aa4bd" font-family="Arial,sans-serif" font-size="26" font-weight="800" letter-spacing="2">CHAIN</text>
@@ -267,12 +275,15 @@ export function buildCastMintImageSvg(input: CastNftInput): string {
   return buildNeonImageSvg(cleanAuthor, seed, shortCast);
 }
 
+export function buildCastMintImageDataUri(input: CastNftInput): string {
+  return `data:image/svg+xml;base64,${toBase64(buildCastMintImageSvg(input))}`;
+}
+
 export function buildCastMintTokenUri(input: CastNftInput): string {
   const metadata = buildCastNftMetadata(input);
-  const svg = buildCastMintImageSvg(input);
   const payload = {
     ...metadata,
-    image: `data:image/svg+xml;base64,${toBase64(svg)}`,
+    image: buildCastMintImageDataUri(input),
   };
   return `data:application/json;base64,${toBase64(JSON.stringify(payload))}`;
 }

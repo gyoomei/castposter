@@ -7,10 +7,14 @@ export default defineConfig({
   publicDir: 'public',
   server: {
     port: 3000,
-    host: true
+    host: true,
+    proxy: {
+      '/api/share-card': 'http://127.0.0.1:8787',
+      '/api/warpcast': 'http://127.0.0.1:8787',
+    },
   },
   build: {
     outDir: 'dist',
-    sourcemap: true
-  }
+    sourcemap: true,
+  },
 });
