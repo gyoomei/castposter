@@ -302,8 +302,7 @@
     @media (max-width: 420px) {
       .app { padding: 14px; gap: 13px; }
       .hero { padding-top: 14px; }
-      .preview { max-width: 318px; border-radius: 28px; transform: perspective(900px) rotateY(-3deg) rotateX(2deg); }
-      @keyframes cardFloat { 0%, 100% { transform: perspective(900px) rotateY(-3deg) rotateX(2deg) translateY(0); } 50% { transform: perspective(900px) rotateY(2deg) rotateX(1deg) translateY(-7px); } }
+      .preview { max-width: 318px; border-radius: 28px; }
     }
   </style>
 </head>
@@ -320,8 +319,8 @@
 
       <section class="hero">
         <div class="hero-badge">Farcaster Mini App</div>
-        <h1>Turn Casts into 3D NFTs</h1>
-        <p class="hero-desc">Paste a Farcaster URL, generate a premium collectible card, then mint on Base</p>
+        <h1>Turn Casts into NFT Cards</h1>
+        <p class="hero-desc">Paste a Farcaster URL, generate a clean collectible card, then mint on Base</p>
         
         <div class="stats">
           <div class="stat">
@@ -333,8 +332,8 @@
             <span class="stat-label">Network</span>
           </div>
           <div class="stat">
-            <span class="stat-value">3D</span>
-            <span class="stat-label">Card FX</span>
+            <span class="stat-value">SVG</span>
+            <span class="stat-label">Card</span>
           </div>
         </div>
       </section>
@@ -346,7 +345,7 @@
         </div>
         <div class="preview-content">
           <div class="preview-placeholder" id="previewPlaceholder">
-            Paste a cast URL to generate your holographic NFT preview
+            Paste a cast URL to generate your NFT preview
           </div>
           <div class="preview-cast" id="previewCast" hidden>
             <div class="cast-text" id="castText"></div>

@@ -227,37 +227,93 @@ function fitSvgText(value: string, options: SvgTextFitOptions): SvgTextFit {
   return { lines, fontSize, lineHeight };
 }
 
-function buildTextLines(lines: string[], x: number, startY: number, lineHeight: number): string {
+function buildTextLines(lines: string[], x: number, startY: number, lineHeight: number, uppercase = false): string {
   return lines
-    .map((line, index) => `<text x="${x}" y="${startY + (index * lineHeight)}">${escapeXml(line)}</text>`)
+    .map((line, index) => `<text x="${x}" y="${startY + (index * lineHeight)}">${escapeXml(uppercase ? line.toUpperCase() : line)}</text>`)
     .join('\n  ');
 }
 
+type SvgStyleTheme = {
+  background: string;
+  panel: string;
+  text: string;
+  muted: string;
+  border: string;
+  footer: string;
+  accent: string;
+  accentTwo: string;
+  label: string;
+  uppercase: boolean;
+};
+
+function getSvgStyleTheme(style: CastMintPreviewStyle): SvgStyleTheme {
+  if (style === 'minimal') {
+    return {
+      background: '#ffffff',
+      panel: '#ffffff',
+      text: '#111827',
+      muted: '#64748b',
+      border: '#dbe4ef',
+      footer: '#f8fafc',
+      accent: '#0ea5e9',
+      accentTwo: '#94a3b8',
+      label: 'MINIMAL',
+      uppercase: false,
+    };
+  }
+
+  if (style === 'poster') {
+    return {
+      background: '#fff7ed',
+      panel: '#fffbeb',
+      text: '#1f1308',
+      muted: '#9a3412',
+      border: '#fdba74',
+      footer: '#ffedd5',
+      accent: '#f97316',
+      accentTwo: '#facc15',
+      label: 'POSTER',
+      uppercase: true,
+    };
+  }
+
+  return {
+    background: '#0f172a',
+    panel: '#111827',
+    text: '#f8fafc',
+    muted: '#a5f3fc',
+    border: '#334155',
+    footer: '#1e293b',
+    accent: '#7c3aed',
+    accentTwo: '#55e7ff',
+    label: 'NEON',
+    uppercase: false,
+  };
+}
+
 function buildSimpleImageSvg(cleanAuthor: string, seed: string, cleanCast: string, style: CastMintPreviewStyle): string {
+  const theme = getSvgStyleTheme(style);
   const castFit = fitSvgText(cleanCast, { boxWidth: 900, boxHeight: 650, maxFontSize: 66, minFontSize: 32 });
-  const castTextLines = buildTextLines(castFit.lines, 126, 445, castFit.lineHeight);
+  const castTextLines = buildTextLines(castFit.lines, 126, 445, castFit.lineHeight, theme.uppercase);
   const safeAuthor = escapeXml(cleanAuthor);
   const safeSeed = escapeXml(seed);
-  const accent = style === 'poster' ? '#f97316' : style === 'minimal' ? '#0ea5e9' : '#7c3aed';
-  const accentTwo = style === 'poster' ? '#facc15' : style === 'minimal' ? '#94a3b8' : '#55e7ff';
-  const background = style === 'poster' ? '#fff7ed' : style === 'minimal' ? '#ffffff' : '#f8fafc';
 
   return `<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="1600" viewBox="0 0 1200 1600">
-  <rect width="1200" height="1600" rx="76" fill="${background}"/>
-  <rect x="72" y="84" width="1056" height="1432" rx="58" fill="#ffffff" stroke="#dbe4ef" stroke-width="4"/>
-  <rect x="72" y="84" width="1056" height="22" rx="11" fill="${accent}"/>
-  <rect x="72" y="84" width="528" height="22" rx="11" fill="${accentTwo}" opacity=".9"/>
-  <text x="126" y="202" fill="#0f172a" font-family="Arial,sans-serif" font-size="52" font-weight="950" letter-spacing="7">CASTMINT</text>
-  <text x="126" y="264" fill="#64748b" font-family="Arial,sans-serif" font-size="27" font-weight="850" letter-spacing="3">FARCASTER CAST NFT</text>
-  <rect x="126" y="318" width="948" height="2" fill="#e2e8f0"/>
-  <g fill="#0f172a" font-family="Arial,sans-serif" font-size="${castFit.fontSize}" font-weight="950" dominant-baseline="text-before-edge">
+  <rect width="1200" height="1600" rx="76" fill="${theme.background}"/>
+  <rect x="72" y="84" width="1056" height="1432" rx="58" fill="${theme.panel}" stroke="${theme.border}" stroke-width="4"/>
+  <rect x="72" y="84" width="1056" height="22" rx="11" fill="${theme.accent}"/>
+  <rect x="72" y="84" width="528" height="22" rx="11" fill="${theme.accentTwo}" opacity=".95"/>
+  <text x="126" y="202" fill="${theme.text}" font-family="Arial,sans-serif" font-size="52" font-weight="950" letter-spacing="7">CASTMINT</text>
+  <text x="126" y="264" fill="${theme.muted}" font-family="Arial,sans-serif" font-size="27" font-weight="850" letter-spacing="3">${theme.label} FARCASTER CAST NFT</text>
+  <rect x="126" y="318" width="948" height="2" fill="${theme.border}"/>
+  <g fill="${theme.text}" font-family="Arial,sans-serif" font-size="${castFit.fontSize}" font-weight="950" dominant-baseline="text-before-edge">
   ${castTextLines}
   </g>
-  <rect x="126" y="1224" width="948" height="150" rx="32" fill="#f1f5f9" stroke="#e2e8f0" stroke-width="2"/>
-  <circle cx="188" cy="1299" r="32" fill="${accent}"/>
-  <text x="244" y="1285" fill="#64748b" font-family="Arial,sans-serif" font-size="24" font-weight="850" letter-spacing="2">CAST BY</text>
-  <text x="244" y="1344" fill="#0f172a" font-family="Arial,sans-serif" font-size="50" font-weight="950">@${safeAuthor}</text>
-  <text x="126" y="1460" fill="#94a3b8" font-family="Arial,sans-serif" font-size="26" font-weight="850">BASE • #${safeSeed}</text>
+  <rect x="126" y="1224" width="948" height="150" rx="32" fill="${theme.footer}" stroke="${theme.border}" stroke-width="2"/>
+  <circle cx="188" cy="1299" r="32" fill="${theme.accent}"/>
+  <text x="244" y="1285" fill="${theme.muted}" font-family="Arial,sans-serif" font-size="24" font-weight="850" letter-spacing="2">CAST BY</text>
+  <text x="244" y="1344" fill="${theme.text}" font-family="Arial,sans-serif" font-size="50" font-weight="950">@${safeAuthor}</text>
+  <text x="126" y="1460" fill="${theme.muted}" font-family="Arial,sans-serif" font-size="26" font-weight="850">BASE • #${safeSeed}</text>
 </svg>`;
 }
 

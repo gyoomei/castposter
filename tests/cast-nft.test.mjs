@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import {
+  buildCastMintImageSvg,
   buildCastMintTokenUri,
   buildCastNftMetadata,
   CASTMINT_PREVIEW_STYLES,
@@ -29,8 +30,8 @@ assert.equal(metadata.description.includes(sample), true, 'description should in
 assert.equal(metadata.external_url, 'https://warpcast.com/gyoo/0x123');
 assert.deepEqual(
   metadata.attributes.map((item) => item.trait_type),
-  ['Source', 'Creator', 'Cast Seed', 'Chain'],
-  'metadata should include source, creator, seed, and chain attributes',
+  ['Source', 'Creator', 'Cast Seed', 'Style', 'Chain'],
+  'metadata should include source, creator, seed, style, and chain attributes',
 );
 
 
@@ -58,6 +59,19 @@ assert.deepEqual(
 assert.equal(getPreviewStyle('poster'), 'poster', 'known preview style should be accepted');
 assert.equal(getPreviewStyle('unknown'), 'neon', 'unknown preview style should fall back safely');
 assert.equal(formatTxHash('0x1234567890abcdef1234567890abcdef12345678'), '0x12345678…345678', 'long tx hashes should be shortened for UI cards');
+
+const neonSvg = buildCastMintImageSvg({ castText: sample, author: 'gyoo', style: 'neon' });
+const minimalSvg = buildCastMintImageSvg({ castText: sample, author: 'gyoo', style: 'minimal' });
+const posterSvg = buildCastMintImageSvg({ castText: sample, author: 'gyoo', style: 'poster' });
+assert.match(neonSvg, /NEON FARCASTER CAST NFT/, 'neon SVG should render the selected style label');
+assert.match(neonSvg, /fill="#0f172a"/, 'neon SVG should use the dark neon background');
+assert.match(minimalSvg, /MINIMAL FARCASTER CAST NFT/, 'minimal SVG should render the selected style label');
+assert.match(minimalSvg, /fill="#ffffff"/, 'minimal SVG should use clean white styling');
+assert.match(posterSvg, /POSTER FARCASTER CAST NFT/, 'poster SVG should render the selected style label');
+assert.match(posterSvg, /BUILDING ON BASE FROM A/, 'poster SVG should uppercase cast text');
+assert.match(posterSvg, /FARCASTER CAST/, 'poster SVG should keep wrapped uppercase text readable');
+assert.notEqual(neonSvg, minimalSvg, 'different NFT styles should not generate identical SVG images');
+assert.notEqual(minimalSvg, posterSvg, 'poster and minimal styles should not generate identical SVG images');
 const historyItem = createMintHistoryItem({
   castText: '  Minted   cast text  ',
   author: '@gyoo',
