@@ -157,6 +157,7 @@ function updateFrameMeta() {
   const imageUrl = new URL('/api/share-card', window.location.origin);
   imageUrl.searchParams.set('style', state.previewStyle);
   if (state.castText) imageUrl.searchParams.set('text', state.castText.slice(0, 220));
+  if (state.author) imageUrl.searchParams.set('author', state.author);
 
   document.querySelector<HTMLMetaElement>('meta[property="og:image"]')?.setAttribute('content', imageUrl.toString());
 
@@ -168,8 +169,8 @@ function updateFrameMeta() {
       action: {
         type: 'launch_frame',
         name: 'CastMint',
-        url: `${window.location.origin}/?v=17`,
-        splashImageUrl: `${window.location.origin}/icon.png?v=17`,
+        url: `${window.location.origin}/?v=18`,
+        splashImageUrl: `${window.location.origin}/icon.png?v=18`,
         splashBackgroundColor: '#02040a',
       },
     },
@@ -472,10 +473,12 @@ async function handleShare() {
     return;
   }
 
-  const shareText = `I just minted this Farcaster cast into a collectible NFT on Base 🎨${state.castText ? `\n\n“${state.castText}”` : ''}`;
+  const castAuthor = state.author ? `@${state.author.replace(/^@/, '')}` : 'a Farcaster creator';
+  const shareText = `I just minted ${castAuthor}'s Farcaster cast into a collectible NFT on Base 🎨`;
   const shareCardUrl = new URL('/api/share-card', window.location.origin);
   shareCardUrl.searchParams.set('style', state.previewStyle);
   if (state.castText) shareCardUrl.searchParams.set('text', state.castText.slice(0, 220));
+  if (state.author) shareCardUrl.searchParams.set('author', state.author);
 
   try {
     if (state.isMiniApp) {

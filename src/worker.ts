@@ -58,9 +58,11 @@ function wrapSvgText(value: string, maxCharsPerLine: number, maxLines: number): 
 
 function buildShareCardSvg(requestUrl: URL): string {
   const castText = requestUrl.searchParams.get('text') || requestUrl.searchParams.get('cast') || 'I minted a Farcaster cast as an NFT';
+  const rawAuthor = (requestUrl.searchParams.get('author') || '').replace(/^@+/, '').trim();
+  const authorLabel = rawAuthor ? `@${rawAuthor}` : 'Farcaster creator';
   const style = requestUrl.searchParams.get('style') || 'neon';
   const lines = wrapSvgText(castText, 32, 5)
-    .map((line, index) => `<text x="110" y="${305 + index * 66}">${escapeXml(line)}</text>`)
+    .map((line, index) => `<text x="110" y="${325 + index * 62}">${escapeXml(line)}</text>`)
     .join('\n      ');
 
   const accent = style === 'poster' ? '#fde047' : style === 'minimal' ? '#38bdf8' : '#55e7ff';
@@ -76,7 +78,9 @@ function buildShareCardSvg(requestUrl: URL): string {
   <rect x="54" y="54" width="1092" height="692" rx="42" fill="rgba(255,255,255,.055)" stroke="url(#border)" stroke-width="5"/>
   <text x="110" y="150" fill="${accent}" font-family="Arial,sans-serif" font-size="48" font-weight="900" letter-spacing="8">CASTMINT</text>
   <text x="110" y="205" fill="#9aa4bd" font-family="Arial,sans-serif" font-size="28" font-weight="800" letter-spacing="3">FARCASTER CAST NFT • BASE</text>
-  <g fill="#ffffff" font-family="Arial,sans-serif" font-size="52" font-weight="900">
+  <rect x="110" y="232" width="410" height="54" rx="27" fill="rgba(255,255,255,.09)" stroke="${accent}" stroke-opacity=".42"/>
+  <text x="136" y="268" fill="${accent}" font-family="Arial,sans-serif" font-size="25" font-weight="900">CAST BY ${escapeXml(authorLabel)}</text>
+  <g fill="#ffffff" font-family="Arial,sans-serif" font-size="50" font-weight="900">
       ${lines}
   </g>
   <rect x="110" y="660" width="255" height="4" rx="2" fill="${accent}"/>
