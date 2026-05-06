@@ -8,12 +8,12 @@
   <meta name="description" content="Turn any Farcaster cast into a collectible NFT concept on Base.">
   <meta property="og:title" content="CastMint — Cast to NFT">
   <meta property="og:description" content="Turn any Farcaster cast into a collectible NFT concept on Base.">
-  <meta property="og:image" content="https://castposter.sayligood123.workers.dev/og.png?v=24">
+  <meta property="og:image" content="https://castposter.sayligood123.workers.dev/og.png?v=25">
   <meta name="twitter:card" content="summary_large_image">
   <link rel="canonical" href="https://castposter.sayligood123.workers.dev/">
 
-  <meta name="fc:miniapp" content='{"version":"1","imageUrl":"https://castposter.sayligood123.workers.dev/og.png?v=24","button":{"title":"Mint This Cast","action":{"type":"launch_frame","name":"CastMint","url":"https://castposter.sayligood123.workers.dev/?v=24","splashImageUrl":"https://castposter.sayligood123.workers.dev/icon.png?v=24","splashBackgroundColor":"#02040a"}}}' />
-  <meta name="fc:frame" content='{"version":"1","imageUrl":"https://castposter.sayligood123.workers.dev/og.png?v=24","button":{"title":"Mint This Cast","action":{"type":"launch_frame","name":"CastMint","url":"https://castposter.sayligood123.workers.dev/?v=24","splashImageUrl":"https://castposter.sayligood123.workers.dev/icon.png?v=24","splashBackgroundColor":"#02040a"}}}' />
+  <meta name="fc:miniapp" content='{"version":"1","imageUrl":"https://castposter.sayligood123.workers.dev/og.png?v=25","button":{"title":"Mint This Cast","action":{"type":"launch_frame","name":"CastMint","url":"https://castposter.sayligood123.workers.dev/?v=25","splashImageUrl":"https://castposter.sayligood123.workers.dev/icon.png?v=25","splashBackgroundColor":"#02040a"}}}' />
+  <meta name="fc:frame" content='{"version":"1","imageUrl":"https://castposter.sayligood123.workers.dev/og.png?v=25","button":{"title":"Mint This Cast","action":{"type":"launch_frame","name":"CastMint","url":"https://castposter.sayligood123.workers.dev/?v=25","splashImageUrl":"https://castposter.sayligood123.workers.dev/icon.png?v=25","splashBackgroundColor":"#02040a"}}}' />
 
   <style>
     :root {
@@ -155,83 +155,63 @@
       max-width: 345px;
       width: 100%;
       margin: 0 auto 4px;
-      border-radius: 32px;
-      padding: 22px;
+      border-radius: 28px;
+      padding: 24px;
       display: flex; flex-direction: column; justify-content: space-between;
       overflow: hidden;
-      background:
-        radial-gradient(circle at 18% 12%, rgba(85,231,255,.34), transparent 34%),
-        radial-gradient(circle at 88% 18%, rgba(255,91,215,.28), transparent 36%),
-        radial-gradient(circle at 58% 92%, rgba(255,209,102,.18), transparent 34%),
-        linear-gradient(150deg, rgba(255,255,255,.09), rgba(255,255,255,.025) 38%, rgba(0,0,0,.34));
-      border: 1px solid rgba(255,255,255,.16);
-      box-shadow: 0 34px 90px rgba(0,0,0,.55), 0 0 55px rgba(85,231,255,.12), inset 0 1px 0 rgba(255,255,255,.12);
-      transform: perspective(1000px) rotateY(-6deg) rotateX(3deg);
-      animation: cardFloat 5.5s ease-in-out infinite;
-      transform-style: preserve-3d;
+      background: #f8fafc;
+      color: #0f172a;
+      border: 1px solid rgba(148, 163, 184, .42);
+      box-shadow: 0 28px 70px rgba(0,0,0,.38), inset 0 1px 0 rgba(255,255,255,.88);
     }
     .preview::before {
-      content: ""; position: absolute; inset: 0; border-radius: inherit; padding: 1.5px;
-      background: linear-gradient(135deg, rgba(85,231,255,.85), transparent 34%, rgba(255,91,215,.72) 66%, rgba(255,209,102,.72));
-      -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
-      -webkit-mask-composite: xor; mask-composite: exclude;
-      pointer-events: none; z-index: 2;
+      content: "";
+      position: absolute;
+      left: 0; right: 0; top: 0; height: 7px;
+      background: linear-gradient(90deg, #55e7ff, #7c3aed, #ff5bd7);
+      pointer-events: none;
     }
     .preview::after {
-      content: ""; position: absolute; inset: 0;
-      background: linear-gradient(110deg, transparent 35%, rgba(255,255,255,.14) 48%, transparent 62%);
-      animation: shimmer 4.5s ease-in-out infinite;
-      pointer-events: none; z-index: 3;
+      content: "";
+      position: absolute;
+      inset: auto 24px 78px 24px;
+      height: 1px;
+      background: #e2e8f0;
+      pointer-events: none;
     }
 
     .preview[data-style="minimal"] {
-      background: linear-gradient(145deg, #f8fafc, #ffffff);
-      border-color: rgba(148, 163, 184, .55);
-      box-shadow: 0 30px 80px rgba(15,23,42,.28), inset 0 1px 0 rgba(255,255,255,.80);
+      background: #ffffff;
+      border-color: rgba(148, 163, 184, .46);
     }
-    .preview[data-style="minimal"]::before { background: linear-gradient(135deg, rgba(14,165,233,.55), rgba(226,232,240,.65), rgba(251,191,36,.40)); }
-    .preview[data-style="minimal"]::after { opacity: .18; }
-    .preview[data-style="minimal"] .preview-badge,
-    .preview[data-style="minimal"] .cast-author { background: rgba(15,23,42,.055); border-color: rgba(15,23,42,.10); color: #334155; }
-    .preview[data-style="minimal"] .cast-text,
-    .preview[data-style="minimal"] .cast-author-name { color: #0f172a; text-shadow: none; }
-    .preview[data-style="minimal"] .cast-author-username,
-    .preview[data-style="minimal"] .preview-footer-item,
-    .preview[data-style="minimal"] .preview-placeholder { color: #64748b; }
-    .preview[data-style="minimal"] .preview-placeholder::before { color: #0ea5e9; text-shadow: 0 0 22px rgba(14,165,233,.28); }
-
+    .preview[data-style="minimal"]::before { background: linear-gradient(90deg, #0ea5e9, #94a3b8, #f59e0b); }
     .preview[data-style="poster"] {
-      background: linear-gradient(145deg, #ff4d00 0%, #7c2d12 42%, #050505 100%);
-      border-color: rgba(253,224,71,.70);
-      box-shadow: 0 38px 92px rgba(124,45,18,.48), 0 0 54px rgba(251,113,133,.22), inset 0 1px 0 rgba(255,255,255,.12);
+      background: #fff7ed;
+      border-color: rgba(251, 146, 60, .42);
     }
-    .preview[data-style="poster"]::before { background: linear-gradient(135deg, #fde047, transparent 42%, #fb7185); }
-    .preview[data-style="poster"] .preview-badge,
-    .preview[data-style="poster"] .cast-author { background: rgba(0,0,0,.48); border-color: rgba(253,224,71,.36); }
-    .preview[data-style="poster"] .cast-text { font-weight: 950; text-transform: uppercase; letter-spacing: -.055em; text-shadow: 4px 4px 0 rgba(0,0,0,.34); }
-    .preview[data-style="poster"] .preview-placeholder::before { color: #fde047; text-shadow: 0 0 26px rgba(253,224,71,.7); }
+    .preview[data-style="poster"]::before { background: linear-gradient(90deg, #f97316, #facc15, #ef4444); }
+    .preview[data-style="poster"] .cast-text { text-transform: uppercase; letter-spacing: -.055em; }
 
-    .preview-top, .preview-footer, .preview-content { position: relative; z-index: 4; }
+    .preview-top, .preview-footer, .preview-content { position: relative; z-index: 2; }
     .preview-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; }
     .preview-badge {
       padding: 7px 11px; border-radius: 999px;
-      background: rgba(0,0,0,.34); backdrop-filter: blur(16px);
-      border: 1px solid rgba(255,255,255,.13);
+      background: #eef2ff;
+      border: 1px solid #dbe4ef;
       font-size: 10px; font-weight: 900; letter-spacing: .08em; text-transform: uppercase;
-      color: rgba(255,255,255,.88);
+      color: #334155;
     }
-    .preview-content { flex: 1; display: flex; align-items: center; justify-content: center; padding: 20px 0; }
-    .preview-placeholder { text-align: center; color: var(--text-secondary); font-size: 14px; max-width: 220px; }
-    .preview-placeholder::before { content: "✦"; display: block; font-size: 46px; color: var(--cyan); text-shadow: 0 0 28px var(--cyan); margin-bottom: 12px; }
+    .preview-content { flex: 1; display: flex; align-items: center; justify-content: center; padding: 22px 0; }
+    .preview-placeholder { text-align: center; color: #64748b; font-size: 14px; max-width: 220px; }
+    .preview-placeholder::before { content: "✦"; display: block; font-size: 42px; color: #0ea5e9; margin-bottom: 12px; }
     .preview-cast { width: 100%; }
     .cast-text {
-      font-size: clamp(17px, 5.2vw, 23px);
-      line-height: 1.18;
-      margin-bottom: 18px;
-      color: var(--text);
+      font-size: clamp(18px, 5.4vw, 24px);
+      line-height: 1.2;
+      margin-bottom: 20px;
+      color: #0f172a;
       font-weight: 900;
-      letter-spacing: -.04em;
-      text-shadow: 0 3px 28px rgba(0,0,0,.50);
+      letter-spacing: -.045em;
       display: -webkit-box;
       -webkit-line-clamp: 9;
       -webkit-box-orient: vertical;
@@ -240,16 +220,15 @@
     .cast-author {
       display: flex; align-items: center; gap: 11px;
       padding: 12px; border-radius: 18px;
-      background: rgba(0,0,0,.34);
-      border: 1px solid rgba(255,255,255,.12);
-      backdrop-filter: blur(16px);
+      background: #f1f5f9;
+      border: 1px solid #e2e8f0;
     }
-    .cast-avatar { width: 34px; height: 34px; border-radius: 50%; background: conic-gradient(from 120deg, var(--cyan), var(--pink), var(--gold), var(--cyan)); box-shadow: 0 0 22px rgba(85,231,255,.22); }
+    .cast-avatar { width: 34px; height: 34px; border-radius: 50%; background: linear-gradient(135deg, #55e7ff, #7c3aed, #ff5bd7); }
     .cast-author-info { flex: 1; min-width: 0; }
-    .cast-author-name { font-size: 14px; font-weight: 850; display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .cast-author-username { font-size: 12px; color: var(--text-secondary); display: block; }
-    .preview-footer { display: flex; justify-content: space-between; align-items: center; padding-top: 13px; border-top: 1px solid rgba(255,255,255,.09); }
-    .preview-footer-item { font-size: 10px; color: var(--text-secondary); font-weight: 900; letter-spacing: .08em; text-transform: uppercase; }
+    .cast-author-name { color: #0f172a; font-size: 14px; font-weight: 900; display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .cast-author-username { font-size: 12px; color: #64748b; display: block; }
+    .preview-footer { display: flex; justify-content: space-between; align-items: center; padding-top: 13px; }
+    .preview-footer-item { font-size: 10px; color: #64748b; font-weight: 900; letter-spacing: .08em; text-transform: uppercase; }
 
     .form-section { display: flex; flex-direction: column; gap: 14px; }
     .input-group { display: flex; flex-direction: column; gap: 8px; }
