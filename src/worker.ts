@@ -251,6 +251,67 @@ function svgResponse(svg: string): Response {
   }));
 }
 
+function escapeHtml(value = ''): string {
+  return escapeXml(value).replace(/'/g, '&#39;');
+}
+
+function sharePageHtml(requestUrl: URL): string {
+  const params = requestUrl.searchParams.toString();
+  const imageUrl = new URL(`/api/share-card${params ? `?${params}` : ''}`, requestUrl.origin).toString();
+  const appUrl = new URL('/', requestUrl.origin);
+  appUrl.searchParams.set('v', requestUrl.searchParams.get('v') || '21');
+  const appUrlString = appUrl.toString();
+  const miniappPayload = JSON.stringify({
+    version: '1',
+    imageUrl,
+    button: {
+      title: 'Launch CastMint',
+      action: {
+        type: 'launch_frame',
+        name: 'CastMint',
+        url: appUrlString,
+        splashImageUrl: `${requestUrl.origin}/icon.png?v=${requestUrl.searchParams.get('v') || '21'}`,
+        splashBackgroundColor: '#02040a',
+      },
+    },
+  });
+
+  return `<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CastMint — Cast to NFT</title>
+  <meta name="description" content="Turn any Farcaster cast into a collectible NFT on Base.">
+  <meta property="og:title" content="CastMint — Cast to NFT">
+  <meta property="og:description" content="Turn any Farcaster cast into a collectible NFT on Base.">
+  <meta property="og:image" content="${escapeHtml(imageUrl)}">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="fc:miniapp" content='${escapeHtml(miniappPayload)}'>
+  <meta name="fc:frame" content='${escapeHtml(miniappPayload)}'>
+  <link rel="canonical" href="${escapeHtml(appUrlString)}">
+</head>
+<body style="margin:0;background:#02040a;color:#f8fafc;font-family:Inter,system-ui,sans-serif;display:grid;min-height:100vh;place-items:center;text-align:center;padding:24px;">
+  <main>
+    <img src="${escapeHtml(imageUrl)}" alt="CastMint share card" style="width:min(100%,600px);border-radius:24px;box-shadow:0 24px 80px rgba(6,182,212,.24);">
+    <h1>CastMint</h1>
+    <p>Turn any Farcaster cast into a collectible NFT on Base.</p>
+    <p><a href="${escapeHtml(appUrlString)}" style="color:#22d3ee;font-weight:800;">Launch CastMint</a></p>
+  </main>
+</body>
+</html>`;
+}
+
+function htmlResponse(html: string): Response {
+  return withCors(new Response(html, {
+    status: 200,
+    headers: {
+      'Content-Type': 'text/html; charset=utf-8',
+      'Cache-Control': `public, max-age=${SHARE_CARD_CACHE_SECONDS}`,
+    },
+  }));
+}
+
 function buildWarpcastUrl(requestUrl: URL): URL | null {
   const prefix = '/api/warpcast';
   if (!requestUrl.pathname.startsWith(prefix)) return null;
@@ -274,13 +335,15 @@ const worker: WorkerExport = {
       return withCors(new Response(null, { status: 204 }));
     }
 
-    if (url.pathname === '/api/share-card') {
+    if (url.pathname === '/api/share-card' || url.pathname === '/share') {
       const cache = (caches as CacheStorageWithDefault).default;
       const cacheKey = new Request(url.toString(), { method: 'GET' });
       const cached = await cache.match(cacheKey);
       if (cached) return withCors(cached);
 
-      const response = svgResponse(buildShareCardSvg(await getShareCardData(url)));
+      const response = url.pathname === '/share'
+        ? htmlResponse(sharePageHtml(url))
+        : svgResponse(buildShareCardSvg(await getShareCardData(url)));
       ctx.waitUntil(cache.put(cacheKey, response.clone()));
       return response;
     }

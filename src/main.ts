@@ -153,20 +153,30 @@ function updatePreview() {
   updateFrameMeta();
 }
 
-function buildShareCardUrl(includeTextFallback = false): URL {
-  const imageUrl = new URL('/api/share-card', window.location.origin);
+const APP_VERSION = '21';
+
+function applyShareParams(url: URL, includeTextFallback = false): URL {
   const castHash = getCastHashFromUrl(state.castUrl);
-  imageUrl.searchParams.set('style', state.previewStyle);
+  url.searchParams.set('style', state.previewStyle);
+  url.searchParams.set('v', APP_VERSION);
 
   if (castHash && state.author) {
-    imageUrl.searchParams.set('author', state.author.replace(/^@/, ''));
-    imageUrl.searchParams.set('hash', castHash);
+    url.searchParams.set('author', state.author.replace(/^@/, ''));
+    url.searchParams.set('hash', castHash);
   } else {
-    if (state.author) imageUrl.searchParams.set('author', state.author.replace(/^@/, ''));
-    if (includeTextFallback && state.castText) imageUrl.searchParams.set('text', state.castText.slice(0, 280));
+    if (state.author) url.searchParams.set('author', state.author.replace(/^@/, ''));
+    if (includeTextFallback && state.castText) url.searchParams.set('text', state.castText.slice(0, 280));
   }
 
-  return imageUrl;
+  return url;
+}
+
+function buildShareCardUrl(includeTextFallback = false): URL {
+  return applyShareParams(new URL('/api/share-card', window.location.origin), includeTextFallback);
+}
+
+function buildSharePageUrl(includeTextFallback = false): URL {
+  return applyShareParams(new URL('/share', window.location.origin), includeTextFallback);
 }
 
 function updateFrameMeta() {
@@ -182,8 +192,8 @@ function updateFrameMeta() {
       action: {
         type: 'launch_frame',
         name: 'CastMint',
-        url: `${window.location.origin}/?v=18`,
-        splashImageUrl: `${window.location.origin}/icon.png?v=18`,
+        url: `${window.location.origin}/?v=${APP_VERSION}`,
+        splashImageUrl: `${window.location.origin}/icon.png?v=${APP_VERSION}`,
         splashBackgroundColor: '#02040a',
       },
     },
@@ -488,13 +498,13 @@ async function handleShare() {
 
   const castAuthor = state.author ? `@${state.author.replace(/^@/, '')}` : 'a Farcaster creator';
   const shareText = `I just minted ${castAuthor}'s Farcaster cast into a collectible NFT on Base 🎨`;
-  const shareCardUrl = buildShareCardUrl(false);
+  const sharePageUrl = buildSharePageUrl(false);
 
   try {
     if (state.isMiniApp) {
       await sdk.actions.composeCast({
         text: shareText,
-        embeds: [shareCardUrl.toString()],
+        embeds: [sharePageUrl.toString()],
       });
       return;
     }
@@ -507,7 +517,7 @@ async function handleShare() {
       await navigator.share({
         title: 'CastMint NFT',
         text: shareText,
-        url: shareCardUrl.toString(),
+        url: sharePageUrl.toString(),
       });
       return;
     } catch {
@@ -515,7 +525,7 @@ async function handleShare() {
     }
   }
 
-  window.open(`https://warpcast.com/~/compose?text=${encodeURIComponent(shareText)}&embeds[]=${encodeURIComponent(shareCardUrl.toString())}`, '_blank', 'noopener,noreferrer');
+  window.open(`https://warpcast.com/~/compose?text=${encodeURIComponent(shareText)}&embeds[]=${encodeURIComponent(sharePageUrl.toString())}`, '_blank', 'noopener,noreferrer');
 }
 
 function handleNew() {
