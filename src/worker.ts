@@ -23,7 +23,7 @@ const SHARE_IMAGE_WIDTH = 1200;
 const SHARE_IMAGE_HEIGHT = 800;
 const WARPCAST_PAGE_LIMIT = 50;
 const SHARE_CARD_CACHE_SECONDS = 300;
-const SHARE_CARD_VERSION = '25';
+const SHARE_CARD_VERSION = '26';
 
 function escapeXml(value = ''): string {
   return value
@@ -187,35 +187,92 @@ async function getShareCardData(requestUrl: URL): Promise<ShareCardData> {
   };
 }
 
+function getShareStyleTheme(style: string) {
+  if (style === 'minimal') {
+    return {
+      bg: '#f8fafc',
+      bg2: '#e0f2fe',
+      card: '#ffffff',
+      panel: '#f1f5f9',
+      text: '#0f172a',
+      muted: '#64748b',
+      accent: '#0ea5e9',
+      accent2: '#14b8a6',
+      quote: '#111827',
+      label: 'MINIMAL',
+    };
+  }
+
+  if (style === 'poster') {
+    return {
+      bg: '#431407',
+      bg2: '#f97316',
+      card: '#fff7ed',
+      panel: '#fed7aa',
+      text: '#431407',
+      muted: '#9a3412',
+      accent: '#f97316',
+      accent2: '#fde047',
+      quote: '#431407',
+      label: 'POSTER',
+    };
+  }
+
+  return {
+    bg: '#02040a',
+    bg2: '#111a35',
+    card: '#07111f',
+    panel: '#0b1730',
+    text: '#f8fafc',
+    muted: '#94a3b8',
+    accent: '#55e7ff',
+    accent2: '#ff5bd7',
+    quote: '#ffffff',
+    label: 'NEON',
+  };
+}
+
 function buildShareCardSvg(data: ShareCardData): string {
   const castText = data.text;
   const authorLabel = data.author ? `@${data.author}` : 'Farcaster creator';
-  const style = data.style;
+  const theme = getShareStyleTheme(data.style);
   const textFit = fitShareText(castText);
+  const quoteX = 218;
+  const quoteY = 322;
   const lines = textFit.lines
-    .map((line, index) => `<text x="110" y="${325 + index * textFit.lineHeight}">${escapeXml(line)}</text>`)
-    .join('\n      ');
-
-  const accent = style === 'poster' ? '#fde047' : style === 'minimal' ? '#38bdf8' : '#55e7ff';
+    .map((line, index) => `<text x="${quoteX}" y="${quoteY + index * textFit.lineHeight}">${escapeXml(line)}</text>`)
+    .join('\n        ');
 
   return `<svg xmlns="http://www.w3.org/2000/svg" width="${SHARE_IMAGE_WIDTH}" height="${SHARE_IMAGE_HEIGHT}" viewBox="0 0 ${SHARE_IMAGE_WIDTH} ${SHARE_IMAGE_HEIGHT}">
   <defs>
-    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#02040a"/><stop offset=".55" stop-color="#111a35"/><stop offset="1" stop-color="#3a0a3d"/></linearGradient>
-    <linearGradient id="border" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#55e7ff"/><stop offset=".55" stop-color="#ff5bd7"/><stop offset="1" stop-color="#ffd166"/></linearGradient>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="${theme.bg}"/><stop offset=".58" stop-color="${theme.bg2}"/><stop offset="1" stop-color="${theme.accent2}"/></linearGradient>
+    <linearGradient id="edge" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="${theme.accent}"/><stop offset="1" stop-color="${theme.accent2}"/></linearGradient>
   </defs>
   <rect width="1200" height="800" rx="54" fill="url(#bg)"/>
-  <circle cx="1020" cy="120" r="230" fill="#ff5bd7" opacity=".23"/>
-  <circle cx="125" cy="720" r="260" fill="#55e7ff" opacity=".20"/>
-  <rect x="54" y="54" width="1092" height="692" rx="42" fill="rgba(255,255,255,.055)" stroke="url(#border)" stroke-width="5"/>
-  <text x="110" y="150" fill="${accent}" font-family="Arial,sans-serif" font-size="48" font-weight="900" letter-spacing="8">CASTMINT</text>
-  <text x="110" y="205" fill="#9aa4bd" font-family="Arial,sans-serif" font-size="28" font-weight="800" letter-spacing="3">FARCASTER CAST NFT • BASE</text>
-  <rect x="110" y="232" width="410" height="54" rx="27" fill="rgba(255,255,255,.09)" stroke="${accent}" stroke-opacity=".42"/>
-  <text x="136" y="268" fill="${accent}" font-family="Arial,sans-serif" font-size="25" font-weight="900">CAST BY ${escapeXml(authorLabel)}</text>
-  <g fill="#ffffff" font-family="Arial,sans-serif" font-size="${textFit.fontSize}" font-weight="900">
-      ${lines}
+  <circle cx="1030" cy="120" r="245" fill="${theme.accent2}" opacity=".25"/>
+  <circle cx="135" cy="715" r="255" fill="${theme.accent}" opacity=".22"/>
+  <path d="M82 642 C286 568 447 704 650 622 C852 540 958 618 1120 536" fill="none" stroke="${theme.accent}" stroke-width="3" opacity=".22"/>
+
+  <g transform="translate(126 74) rotate(-3 474 326)">
+    <rect x="0" y="0" width="948" height="652" rx="44" fill="${theme.card}" stroke="url(#edge)" stroke-width="7"/>
+    <rect x="34" y="34" width="880" height="584" rx="34" fill="${theme.panel}" opacity=".62"/>
+    <rect x="64" y="58" width="210" height="54" rx="27" fill="${theme.accent}" opacity=".16" stroke="${theme.accent}"/>
+    <text x="86" y="94" fill="${theme.accent}" font-family="Arial,sans-serif" font-size="25" font-weight="900" letter-spacing="5">${theme.label}</text>
+    <text x="304" y="94" fill="${theme.muted}" font-family="Arial,sans-serif" font-size="22" font-weight="800" letter-spacing="3">CASTMINT • BASE NFT</text>
+
+    <text x="64" y="218" fill="${theme.accent}" font-family="Georgia,serif" font-size="112" font-weight="900" opacity=".9">“</text>
+    <g fill="${theme.quote}" font-family="Arial,sans-serif" font-size="${textFit.fontSize}" font-weight="900" letter-spacing="-.8">
+        ${lines}
+    </g>
+
+    <rect x="64" y="500" width="470" height="76" rx="38" fill="${theme.accent}" opacity=".14" stroke="${theme.accent}" stroke-width="2"/>
+    <text x="98" y="548" fill="${theme.accent}" font-family="Arial,sans-serif" font-size="27" font-weight="900">CAST BY ${escapeXml(authorLabel)}</text>
+    <rect x="624" y="506" width="224" height="62" rx="31" fill="url(#edge)"/>
+    <text x="656" y="546" fill="#ffffff" font-family="Arial,sans-serif" font-size="25" font-weight="900">Mint This</text>
   </g>
-  <rect x="110" y="660" width="255" height="4" rx="2" fill="${accent}"/>
-  <text x="110" y="710" fill="#ffffff" font-family="Arial,sans-serif" font-size="30" font-weight="900">Mint your own cast NFT</text>
+
+  <text x="78" y="736" fill="#ffffff" font-family="Arial,sans-serif" font-size="31" font-weight="900" opacity=".96">Generated NFT preview from a Farcaster cast</text>
+  <text x="78" y="774" fill="#dbeafe" font-family="Arial,sans-serif" font-size="22" font-weight="700" opacity=".76">Open CastMint to mint your own collectible on Base</text>
 </svg>`;
 }
 
@@ -264,15 +321,16 @@ function escapeMetaJson(value: string): string {
   return value.replace(/'/g, '&#39;');
 }
 
-function buildFallbackPngUrl(requestUrl: URL): string {
-  return new URL(`/og.png?v=${requestUrl.searchParams.get('v') || SHARE_CARD_VERSION}`, requestUrl.origin).toString();
+function buildShareImageUrl(requestUrl: URL): string {
+  const params = new URLSearchParams(requestUrl.searchParams);
+  params.set('v', requestUrl.searchParams.get('v') || SHARE_CARD_VERSION);
+  return new URL(`/api/share-card?${params.toString()}`, requestUrl.origin).toString();
 }
 
 function sharePageHtml(requestUrl: URL): string {
   const params = new URLSearchParams(requestUrl.searchParams);
   params.set('v', requestUrl.searchParams.get('v') || SHARE_CARD_VERSION);
-  const imageUrl = buildFallbackPngUrl(requestUrl);
-  const svgImageUrl = new URL(`/api/share-card?${params.toString()}`, requestUrl.origin).toString();
+  const imageUrl = buildShareImageUrl(requestUrl);
   const appUrl = new URL('/', requestUrl.origin);
   appUrl.searchParams.set('v', requestUrl.searchParams.get('v') || SHARE_CARD_VERSION);
   const appUrlString = appUrl.toString();
@@ -316,7 +374,6 @@ function sharePageHtml(requestUrl: URL): string {
     <h1>CastMint</h1>
     <p>Turn any Farcaster cast into a collectible NFT on Base.</p>
     <p><a href="${escapeHtml(appUrlString)}" style="color:#22d3ee;font-weight:800;">Launch CastMint</a></p>
-    <p style="font-size:12px;color:#64748b;">SVG card: <a href="${escapeHtml(svgImageUrl)}" style="color:#22d3ee;">open dynamic card</a></p>
   </main>
 </body>
 </html>`;

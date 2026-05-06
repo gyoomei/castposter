@@ -153,7 +153,7 @@ function updatePreview() {
   updateFrameMeta();
 }
 
-const APP_VERSION = '25';
+const APP_VERSION = '26';
 
 function applyShareParams(url: URL, includeTextFallback = false): URL {
   const castHash = getCastHashFromUrl(state.castUrl);
