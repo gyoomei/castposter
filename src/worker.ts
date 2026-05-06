@@ -21,6 +21,8 @@ const WARPCAST_API = 'https://api.warpcast.com/v2';
 const CACHE_SECONDS = 45;
 const SHARE_IMAGE_WIDTH = 1200;
 const SHARE_IMAGE_HEIGHT = 800;
+const WARPCAST_PAGE_LIMIT = 50;
+const SHARE_CARD_CACHE_SECONDS = 300;
 
 function escapeXml(value = ''): string {
   return value
@@ -108,11 +110,86 @@ function fitShareText(value: string): ShareTextFit {
   return { lines, fontSize, lineHeight };
 }
 
-function buildShareCardSvg(requestUrl: URL): string {
-  const castText = requestUrl.searchParams.get('text') || requestUrl.searchParams.get('cast') || 'I minted a Farcaster cast as an NFT';
+type ShareCardData = {
+  text: string;
+  author: string;
+  style: string;
+};
+
+function normalizeHash(value = ''): string {
+  return value.trim().toLowerCase();
+}
+
+function getCastCandidates(payload: unknown): Array<{ hash?: string; castHash?: string; merkleRoot?: string; text?: string }> {
+  const typed = payload as {
+    result?: { casts?: Array<{ hash?: string; castHash?: string; merkleRoot?: string; text?: string }>; cast?: { hash?: string; castHash?: string; merkleRoot?: string; text?: string } };
+    casts?: Array<{ hash?: string; castHash?: string; merkleRoot?: string; text?: string }>;
+    cast?: { hash?: string; castHash?: string; merkleRoot?: string; text?: string };
+  };
+  const candidates = [
+    typed?.result?.casts,
+    typed?.result?.cast ? [typed.result.cast] : null,
+    typed?.casts,
+    typed?.cast ? [typed.cast] : null,
+  ];
+  return candidates.find(Array.isArray) || [];
+}
+
+function findCastText(payload: unknown, targetHash: string): string {
+  const normalizedTarget = normalizeHash(targetHash);
+  const candidates = getCastCandidates(payload);
+  const cast = candidates.find((item) => [item.hash, item.castHash, item.merkleRoot].some((value) => normalizeHash(value || '') === normalizedTarget));
+  return cast?.text || '';
+}
+
+async function fetchCastTextByHash(author: string, hash: string): Promise<string> {
+  if (!author || !hash) return '';
+
+  const userUrl = new URL(`${WARPCAST_API}/user-by-username`);
+  userUrl.searchParams.set('username', author);
+  const userResponse = await fetch(userUrl.toString(), { headers: { Accept: 'application/json' } });
+  if (!userResponse.ok) return '';
+  const userData = await userResponse.json();
+  const fid = Number(userData?.result?.user?.fid);
+  if (!Number.isInteger(fid) || fid <= 0) return '';
+
+  let cursor = '';
+  for (let page = 0; page < 3; page += 1) {
+    const castsUrl = new URL(`${WARPCAST_API}/casts`);
+    castsUrl.searchParams.set('fid', String(fid));
+    castsUrl.searchParams.set('limit', String(WARPCAST_PAGE_LIMIT));
+    if (cursor) castsUrl.searchParams.set('cursor', cursor);
+
+    const castsResponse = await fetch(castsUrl.toString(), { headers: { Accept: 'application/json' } });
+    if (!castsResponse.ok) return '';
+    const castsData = await castsResponse.json();
+    const text = findCastText(castsData, hash);
+    if (text) return text;
+
+    cursor = castsData?.next?.cursor || castsData?.result?.next?.cursor || '';
+    if (!cursor) break;
+  }
+
+  return '';
+}
+
+async function getShareCardData(requestUrl: URL): Promise<ShareCardData> {
   const rawAuthor = (requestUrl.searchParams.get('author') || '').replace(/^@+/, '').trim();
-  const authorLabel = rawAuthor ? `@${rawAuthor}` : 'Farcaster creator';
-  const style = requestUrl.searchParams.get('style') || 'neon';
+  const hash = requestUrl.searchParams.get('hash') || '';
+  const fallbackText = requestUrl.searchParams.get('text') || requestUrl.searchParams.get('cast') || '';
+  const fetchedText = rawAuthor && hash ? await fetchCastTextByHash(rawAuthor, hash).catch(() => '') : '';
+
+  return {
+    text: fetchedText || fallbackText || 'I minted a Farcaster cast as an NFT',
+    author: rawAuthor,
+    style: requestUrl.searchParams.get('style') || 'neon',
+  };
+}
+
+function buildShareCardSvg(data: ShareCardData): string {
+  const castText = data.text;
+  const authorLabel = data.author ? `@${data.author}` : 'Farcaster creator';
+  const style = data.style;
   const textFit = fitShareText(castText);
   const lines = textFit.lines
     .map((line, index) => `<text x="110" y="${325 + index * textFit.lineHeight}">${escapeXml(line)}</text>`)
@@ -169,7 +246,7 @@ function svgResponse(svg: string): Response {
     status: 200,
     headers: {
       'Content-Type': 'image/svg+xml; charset=utf-8',
-      'Cache-Control': 'public, max-age=300',
+      'Cache-Control': `public, max-age=${SHARE_CARD_CACHE_SECONDS}`,
     },
   }));
 }
@@ -198,7 +275,14 @@ const worker: WorkerExport = {
     }
 
     if (url.pathname === '/api/share-card') {
-      return svgResponse(buildShareCardSvg(url));
+      const cache = (caches as CacheStorageWithDefault).default;
+      const cacheKey = new Request(url.toString(), { method: 'GET' });
+      const cached = await cache.match(cacheKey);
+      if (cached) return withCors(cached);
+
+      const response = svgResponse(buildShareCardSvg(await getShareCardData(url)));
+      ctx.waitUntil(cache.put(cacheKey, response.clone()));
+      return response;
     }
 
     const upstream = buildWarpcastUrl(url);

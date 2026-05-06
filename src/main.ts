@@ -153,11 +153,24 @@ function updatePreview() {
   updateFrameMeta();
 }
 
-function updateFrameMeta() {
+function buildShareCardUrl(includeTextFallback = false): URL {
   const imageUrl = new URL('/api/share-card', window.location.origin);
+  const castHash = getCastHashFromUrl(state.castUrl);
   imageUrl.searchParams.set('style', state.previewStyle);
-  if (state.castText) imageUrl.searchParams.set('text', state.castText);
-  if (state.author) imageUrl.searchParams.set('author', state.author);
+
+  if (castHash && state.author) {
+    imageUrl.searchParams.set('author', state.author.replace(/^@/, ''));
+    imageUrl.searchParams.set('hash', castHash);
+  } else {
+    if (state.author) imageUrl.searchParams.set('author', state.author.replace(/^@/, ''));
+    if (includeTextFallback && state.castText) imageUrl.searchParams.set('text', state.castText.slice(0, 280));
+  }
+
+  return imageUrl;
+}
+
+function updateFrameMeta() {
+  const imageUrl = buildShareCardUrl(true);
 
   document.querySelector<HTMLMetaElement>('meta[property="og:image"]')?.setAttribute('content', imageUrl.toString());
 
@@ -475,10 +488,7 @@ async function handleShare() {
 
   const castAuthor = state.author ? `@${state.author.replace(/^@/, '')}` : 'a Farcaster creator';
   const shareText = `I just minted ${castAuthor}'s Farcaster cast into a collectible NFT on Base 🎨`;
-  const shareCardUrl = new URL('/api/share-card', window.location.origin);
-  shareCardUrl.searchParams.set('style', state.previewStyle);
-  if (state.castText) shareCardUrl.searchParams.set('text', state.castText);
-  if (state.author) shareCardUrl.searchParams.set('author', state.author);
+  const shareCardUrl = buildShareCardUrl(false);
 
   try {
     if (state.isMiniApp) {
