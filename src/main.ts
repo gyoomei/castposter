@@ -167,7 +167,7 @@ function posterDataUrl(item: CastMintHistoryItem) {
 }
 
 function getMintButtonLabel() {
-  if (state.minting) return 'Minting on Base…';
+  if (state.minting) return '<span class="spinner"></span>Minting on Base…';
   if (!isValidEvmAddress(MINT_CONTRACT_ADDRESS)) return 'Mint Contract Needed';
   if (mintCompatibilityWarning) return 'Mint ABI Needed';
   return mintPriceWei > 0n ? `Mint on Base · ${formatEther(mintPriceWei)} ETH` : 'Mint on Base';
@@ -242,12 +242,12 @@ function renderPreview() {
   const styleClass = `style-${getPreviewStyle(state.previewStyle)}`;
   const styleLabel = CASTMINT_PREVIEW_STYLES.find((item) => item.id === state.previewStyle)?.label || 'Neon';
 
-  preview.className = `preview-card ${styleClass}`;
+  preview.className = `preview-card ${styleClass} fade-in`;
   preview.innerHTML = `
     <div class="nft-orbit" aria-hidden="true"><span></span><span></span><span></span></div>
     <div class="nft-frame">
       <div class="nft-topline"><span>CAST NFT</span><span>${escapeHtml(styleLabel)} · #${shortAddress(seed)}</span></div>
-      <div class="quote-mark">“</div>
+      <div class="quote-mark">"</div>
       <p class="cast-quote">${escapeHtml(state.castText || 'Paste a cast URL to preview your collectible.')}</p>
       <div class="nft-footer">
         <div><small>Creator</small><strong>@${escapeHtml(state.author || 'caster')}</strong></div>
@@ -341,7 +341,7 @@ function syncInputs() {
 function syncMintButton() {
   const mintBtn = document.getElementById('mintBtn') as HTMLButtonElement | null;
   if (!mintBtn) return;
-  mintBtn.textContent = getMintButtonLabel();
+  mintBtn.innerHTML = getMintButtonLabel();
   mintBtn.disabled = state.minting;
 }
 
@@ -638,6 +638,17 @@ function bindEvents() {
       setStatus('Cast URL detected, but no cast hash found. Paste a full cast URL.'); return;
     }
 
+    // Show skeleton loader
+    const preview = document.getElementById('previewCard');
+    if (preview) {
+      preview.classList.add('fade-out');
+      setTimeout(() => {
+        preview.innerHTML = '<div class="skeleton skeleton-card"></div>';
+        preview.classList.remove('fade-out');
+        preview.classList.add('fade-in');
+      }, 300);
+    }
+
     setStatus('Fetching cast text from Farcaster…');
     try {
       const resolved = await resolveCastFromUrl(normalizedUrl);
@@ -652,6 +663,7 @@ function bindEvents() {
       if (requestId !== castLookupRequest) return;
       console.warn('Cast URL lookup failed:', err);
       setStatus('Cast URL saved. Public lookup is unavailable right now, try again in a moment.');
+      renderPreview(); // restore preview on error
     }
   };
 

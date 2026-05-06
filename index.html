@@ -829,10 +829,75 @@
       font-weight: 600;
     }
 
+    /* Loading skeleton */
+    .skeleton {
+      background: linear-gradient(90deg, rgba(255,255,255,.04) 25%, rgba(255,255,255,.08) 50%, rgba(255,255,255,.04) 75%);
+      background-size: 200% 100%;
+      animation: skeletonShimmer 1.5s ease-in-out infinite;
+      border-radius: 12px;
+    }
+    .skeleton-text {
+      height: 18px;
+      margin: 8px 0;
+      width: 100%;
+    }
+    .skeleton-text.short { width: 60%; }
+    .skeleton-text.medium { width: 80%; }
+    .skeleton-card {
+      min-height: 420px;
+      border-radius: 28px;
+    }
+
+    /* Loading spinner */
+    .spinner {
+      display: inline-block;
+      width: 18px;
+      height: 18px;
+      border: 2.5px solid rgba(255,255,255,.2);
+      border-top-color: var(--cyan);
+      border-radius: 50%;
+      animation: spin .7s linear infinite;
+      vertical-align: middle;
+      margin-right: 8px;
+    }
+
+    /* Staggered entrance */
+    .stagger-1 { animation-delay: .05s; }
+    .stagger-2 { animation-delay: .10s; }
+    .stagger-3 { animation-delay: .15s; }
+    .stagger-4 { animation-delay: .20s; }
+
+    /* Smooth state transitions */
+    .fade-in {
+      animation: fadeIn .4s cubic-bezier(.22, 1, .36, 1) both;
+    }
+    .fade-out {
+      animation: fadeOut .3s cubic-bezier(.22, 1, .36, 1) both;
+    }
+    .scale-in {
+      animation: scaleIn .35s cubic-bezier(.34, 1.56, .64, 1) both;
+    }
+
     /* Keyframes */
     @keyframes riseIn {
       from { opacity: 0; transform: translateY(24px) scale(.97); }
       to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+    @keyframes fadeOut {
+      from { opacity: 1; }
+      to { opacity: 0; }
+    }
+    @keyframes scaleIn {
+      from { opacity: 0; transform: scale(.92); }
+      to { opacity: 1; transform: scale(1); }
+    }
+    @keyframes skeletonShimmer {
+      0% { background-position: 200% 0; }
+      100% { background-position: -200% 0; }
     }
     @keyframes spin { to { transform: rotate(360deg); } }
     @keyframes bgPulse {
