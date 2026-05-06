@@ -227,93 +227,97 @@ function fitSvgText(value: string, options: SvgTextFitOptions): SvgTextFit {
   return { lines, fontSize, lineHeight };
 }
 
-function buildTextLines(lines: string[], x: number, startY: number, lineHeight: number, uppercase = false): string {
+function buildTextLines(lines: string[], x: number, startY: number, lineHeight: number): string {
   return lines
-    .map((line, index) => `<text x="${x}" y="${startY + (index * lineHeight)}">${escapeXml(uppercase ? line.toUpperCase() : line)}</text>`)
+    .map((line, index) => `<text x="${x}" y="${startY + (index * lineHeight)}">${escapeXml(line)}</text>`)
     .join('\n  ');
 }
 
-type SvgStyleTheme = {
-  background: string;
-  panel: string;
-  text: string;
-  muted: string;
-  border: string;
-  footer: string;
-  accent: string;
-  accentTwo: string;
-  label: string;
-  uppercase: boolean;
-};
-
-function getSvgStyleTheme(style: CastMintPreviewStyle): SvgStyleTheme {
-  if (style === 'minimal') {
-    return {
-      background: '#ffffff',
-      panel: '#ffffff',
-      text: '#111827',
-      muted: '#64748b',
-      border: '#dbe4ef',
-      footer: '#f8fafc',
-      accent: '#0ea5e9',
-      accentTwo: '#94a3b8',
-      label: 'MINIMAL',
-      uppercase: false,
-    };
-  }
-
-  if (style === 'poster') {
-    return {
-      background: '#fff7ed',
-      panel: '#fffbeb',
-      text: '#1f1308',
-      muted: '#9a3412',
-      border: '#fdba74',
-      footer: '#ffedd5',
-      accent: '#f97316',
-      accentTwo: '#facc15',
-      label: 'POSTER',
-      uppercase: true,
-    };
-  }
-
-  return {
-    background: '#0f172a',
-    panel: '#111827',
-    text: '#f8fafc',
-    muted: '#a5f3fc',
-    border: '#334155',
-    footer: '#1e293b',
-    accent: '#7c3aed',
-    accentTwo: '#55e7ff',
-    label: 'NEON',
-    uppercase: false,
-  };
-}
-
-function buildSimpleImageSvg(cleanAuthor: string, seed: string, cleanCast: string, style: CastMintPreviewStyle): string {
-  const theme = getSvgStyleTheme(style);
-  const castFit = fitSvgText(cleanCast, { boxWidth: 900, boxHeight: 650, maxFontSize: 66, minFontSize: 32 });
-  const castTextLines = buildTextLines(castFit.lines, 126, 445, castFit.lineHeight, theme.uppercase);
+function buildMinimalImageSvg(cleanAuthor: string, seed: string, cleanCast: string): string {
+  const castFit = fitSvgText(cleanCast, { boxWidth: 900, boxHeight: 540, maxFontSize: 66, minFontSize: 34 });
+  const castTextLines = buildTextLines(castFit.lines, 126, 565, castFit.lineHeight);
   const safeAuthor = escapeXml(cleanAuthor);
   const safeSeed = escapeXml(seed);
-
   return `<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="1600" viewBox="0 0 1200 1600">
-  <rect width="1200" height="1600" rx="76" fill="${theme.background}"/>
-  <rect x="72" y="84" width="1056" height="1432" rx="58" fill="${theme.panel}" stroke="${theme.border}" stroke-width="4"/>
-  <rect x="72" y="84" width="1056" height="22" rx="11" fill="${theme.accent}"/>
-  <rect x="72" y="84" width="528" height="22" rx="11" fill="${theme.accentTwo}" opacity=".95"/>
-  <text x="126" y="202" fill="${theme.text}" font-family="Arial,sans-serif" font-size="52" font-weight="950" letter-spacing="7">CASTMINT</text>
-  <text x="126" y="264" fill="${theme.muted}" font-family="Arial,sans-serif" font-size="27" font-weight="850" letter-spacing="3">${theme.label} FARCASTER CAST NFT</text>
-  <rect x="126" y="318" width="948" height="2" fill="${theme.border}"/>
-  <g fill="${theme.text}" font-family="Arial,sans-serif" font-size="${castFit.fontSize}" font-weight="950" dominant-baseline="text-before-edge">
+  <rect width="1200" height="1600" rx="72" fill="#f8fafc"/>
+  <rect x="78" y="86" width="1044" height="1428" rx="56" fill="#ffffff" stroke="#dbe4ef" stroke-width="4"/>
+  <circle cx="1010" cy="210" r="88" fill="#e0f2fe"/>
+  <circle cx="922" cy="294" r="44" fill="#fef3c7"/>
+  <text x="126" y="180" fill="#0f172a" font-family="Arial,sans-serif" font-size="44" font-weight="900" letter-spacing="7">CASTMINT</text>
+  <text x="126" y="236" fill="#64748b" font-family="Arial,sans-serif" font-size="24" font-weight="800">MINIMAL EDITION • BASE</text>
+  <line x1="126" y1="315" x2="1074" y2="315" stroke="#e2e8f0" stroke-width="3"/>
+  <text x="126" y="445" fill="#cbd5e1" font-family="Georgia,serif" font-size="156" font-weight="900">“</text>
+  <g fill="#0f172a" font-family="Arial,sans-serif" font-size="${castFit.fontSize}" font-weight="900" dominant-baseline="text-before-edge">
   ${castTextLines}
   </g>
-  <rect x="126" y="1224" width="948" height="150" rx="32" fill="${theme.footer}" stroke="${theme.border}" stroke-width="2"/>
-  <circle cx="188" cy="1299" r="32" fill="${theme.accent}"/>
-  <text x="244" y="1285" fill="${theme.muted}" font-family="Arial,sans-serif" font-size="24" font-weight="850" letter-spacing="2">CAST BY</text>
-  <text x="244" y="1344" fill="${theme.text}" font-family="Arial,sans-serif" font-size="50" font-weight="950">@${safeAuthor}</text>
-  <text x="126" y="1460" fill="${theme.muted}" font-family="Arial,sans-serif" font-size="26" font-weight="850">BASE • #${safeSeed}</text>
+  <rect x="126" y="1210" width="948" height="156" rx="34" fill="#f1f5f9"/>
+  <text x="172" y="1278" fill="#64748b" font-family="Arial,sans-serif" font-size="24" font-weight="800" letter-spacing="2">CREATOR</text>
+  <text x="172" y="1338" fill="#0f172a" font-family="Arial,sans-serif" font-size="52" font-weight="950">@${safeAuthor}</text>
+  <text x="126" y="1454" fill="#94a3b8" font-family="Arial,sans-serif" font-size="26" font-weight="800">#${safeSeed}</text>
+</svg>`;
+}
+
+function buildPosterImageSvg(cleanAuthor: string, seed: string, cleanCast: string): string {
+  const posterCast = cleanCast.toUpperCase();
+  const castFit = fitSvgText(posterCast, { boxWidth: 900, boxHeight: 600, maxFontSize: 72, minFontSize: 32 });
+  const castTextLines = buildTextLines(castFit.lines, 126, 505, castFit.lineHeight);
+  const safeAuthor = escapeXml(cleanAuthor);
+  const safeSeed = escapeXml(seed);
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="1600" viewBox="0 0 1200 1600">
+  <defs>
+    <linearGradient id="posterBg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ff4d00"/><stop offset=".48" stop-color="#7c2d12"/><stop offset="1" stop-color="#050505"/></linearGradient>
+    <linearGradient id="posterAccent" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#fde047"/><stop offset="1" stop-color="#fb7185"/></linearGradient>
+  </defs>
+  <rect width="1200" height="1600" fill="url(#posterBg)"/>
+  <rect x="72" y="80" width="1056" height="1440" fill="none" stroke="#fde047" stroke-width="10"/>
+  <rect x="112" y="120" width="976" height="1360" fill="rgba(0,0,0,.42)"/>
+  <text x="126" y="210" fill="#fde047" font-family="Arial Black,Arial,sans-serif" font-size="86" font-weight="900" letter-spacing="-2">CAST</text>
+  <text x="126" y="304" fill="#fff" font-family="Arial Black,Arial,sans-serif" font-size="86" font-weight="900" letter-spacing="-2">POSTER</text>
+  <rect x="126" y="348" width="364" height="18" fill="url(#posterAccent)"/>
+  <g fill="#ffffff" font-family="Arial Black,Arial,sans-serif" font-size="${castFit.fontSize}" font-weight="900" dominant-baseline="text-before-edge">
+  ${castTextLines}
+  </g>
+  <rect x="126" y="1230" width="948" height="170" fill="#fde047"/>
+  <text x="166" y="1302" fill="#111" font-family="Arial,sans-serif" font-size="28" font-weight="950" letter-spacing="3">ORIGINAL CASTER</text>
+  <text x="166" y="1372" fill="#111" font-family="Arial,sans-serif" font-size="54" font-weight="950">@${safeAuthor}</text>
+  <text x="126" y="1468" fill="#fff" font-family="Arial,sans-serif" font-size="30" font-weight="900">BASE • #${safeSeed}</text>
+</svg>`;
+}
+
+function buildNeonImageSvg(cleanAuthor: string, seed: string, cleanCast: string): string {
+  const castFit = fitSvgText(cleanCast, { boxWidth: 900, boxHeight: 520, maxFontSize: 60, minFontSize: 30 });
+  const castTextLines = buildTextLines(castFit.lines, 128, 650, castFit.lineHeight);
+  const safeAuthor = escapeXml(cleanAuthor);
+  const safeSeed = escapeXml(seed);
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="1600" viewBox="0 0 1200 1600">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#02040a"/><stop offset=".35" stop-color="#0b1224"/><stop offset=".70" stop-color="#1a1035"/><stop offset="1" stop-color="#3a0a3d"/></linearGradient>
+    <radialGradient id="glow1" cx="22%" cy="14%" r="78%"><stop offset="0" stop-color="#55e7ff" stop-opacity=".78"/><stop offset=".45" stop-color="#55e7ff" stop-opacity=".16"/><stop offset="1" stop-color="#02040a" stop-opacity="0"/></radialGradient>
+    <radialGradient id="glow2" cx="84%" cy="82%" r="72%"><stop offset="0" stop-color="#ff5bd7" stop-opacity=".60"/><stop offset=".45" stop-color="#ff5bd7" stop-opacity=".12"/><stop offset="1" stop-color="#02040a" stop-opacity="0"/></radialGradient>
+    <linearGradient id="border" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#55e7ff"/><stop offset=".50" stop-color="#ff5bd7"/><stop offset="1" stop-color="#ffd166"/></linearGradient>
+    <linearGradient id="titleGrad" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#dffbff"/><stop offset=".60" stop-color="#ffd166"/></linearGradient>
+  </defs>
+  <rect width="1200" height="1600" rx="92" fill="url(#bg)"/>
+  <rect width="1200" height="1600" rx="92" fill="url(#glow1)"/>
+  <rect width="1200" height="1600" rx="92" fill="url(#glow2)"/>
+  <circle cx="1080" cy="160" r="200" fill="#ff5bd7" opacity=".26"/>
+  <circle cx="140" cy="1360" r="260" fill="#55e7ff" opacity=".22"/>
+  <rect x="68" y="76" width="1064" height="1448" rx="80" fill="rgba(255,255,255,.045)" stroke="url(#border)" stroke-width="4"/>
+  <text x="126" y="172" fill="url(#titleGrad)" font-family="Arial,sans-serif" font-size="46" font-weight="900" letter-spacing="10">CASTMINT</text>
+  <rect x="126" y="196" width="180" height="3" rx="1.5" fill="#55e7ff" opacity=".85"/>
+  <text x="848" y="172" fill="#ffd166" font-family="Arial,sans-serif" font-size="38" font-weight="900">#${safeSeed}</text>
+  <text x="126" y="246" fill="#55e7ff" font-family="Arial,sans-serif" font-size="22" font-weight="800" letter-spacing="4">MINTED ON BASE</text>
+  <text x="130" y="510" fill="rgba(255,255,255,.18)" font-family="Georgia,serif" font-size="240" font-weight="900">“</text>
+  <g fill="#ffffff" font-family="Arial,sans-serif" font-size="${castFit.fontSize}" font-weight="900" dominant-baseline="text-before-edge">
+  ${castTextLines}
+  </g>
+  <text x="126" y="1330" fill="#9aa4bd" font-family="Arial,sans-serif" font-size="26" font-weight="800" letter-spacing="2">CREATOR</text>
+  <text x="126" y="1396" fill="#fff" font-family="Arial,sans-serif" font-size="52" font-weight="950">@${safeAuthor}</text>
+  <text x="876" y="1330" fill="#9aa4bd" font-family="Arial,sans-serif" font-size="26" font-weight="800" letter-spacing="2">CHAIN</text>
+  <text x="876" y="1396" fill="#fff" font-family="Arial,sans-serif" font-size="52" font-weight="950">BASE</text>
+  <rect x="126" y="1460" width="80" height="3" rx="1.5" fill="#55e7ff" opacity=".85"/>
+  <rect x="218" y="1460" width="50" height="3" rx="1.5" fill="#ff5bd7" opacity=".85"/>
+  <rect x="280" y="1460" width="30" height="3" rx="1.5" fill="#ffd166" opacity=".85"/>
 </svg>`;
 }
 
@@ -323,7 +327,9 @@ export function buildCastMintImageSvg(input: CastNftInput): string {
   const style = getPreviewStyle(input.style);
   const seed = getCastNftSeed(`${style}:${cleanAuthor}:${cleanCast}`);
 
-  return buildSimpleImageSvg(cleanAuthor, seed, cleanCast, style);
+  if (style === 'minimal') return buildMinimalImageSvg(cleanAuthor, seed, cleanCast);
+  if (style === 'poster') return buildPosterImageSvg(cleanAuthor, seed, cleanCast);
+  return buildNeonImageSvg(cleanAuthor, seed, cleanCast);
 }
 
 export function buildCastMintImageDataUri(input: CastNftInput): string {

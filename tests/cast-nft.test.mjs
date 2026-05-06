@@ -63,13 +63,14 @@ assert.equal(formatTxHash('0x1234567890abcdef1234567890abcdef12345678'), '0x1234
 const neonSvg = buildCastMintImageSvg({ castText: sample, author: 'gyoo', style: 'neon' });
 const minimalSvg = buildCastMintImageSvg({ castText: sample, author: 'gyoo', style: 'minimal' });
 const posterSvg = buildCastMintImageSvg({ castText: sample, author: 'gyoo', style: 'poster' });
-assert.match(neonSvg, /NEON FARCASTER CAST NFT/, 'neon SVG should render the selected style label');
-assert.match(neonSvg, /fill="#0f172a"/, 'neon SVG should use the dark neon background');
-assert.match(minimalSvg, /MINIMAL FARCASTER CAST NFT/, 'minimal SVG should render the selected style label');
-assert.match(minimalSvg, /fill="#ffffff"/, 'minimal SVG should use clean white styling');
-assert.match(posterSvg, /POSTER FARCASTER CAST NFT/, 'poster SVG should render the selected style label');
-assert.match(posterSvg, /BUILDING ON BASE FROM A/, 'poster SVG should uppercase cast text');
-assert.match(posterSvg, /FARCASTER CAST/, 'poster SVG should keep wrapped uppercase text readable');
+assert.match(neonSvg, /MINTED ON BASE/, 'neon SVG should render the premium neon layout');
+assert.match(neonSvg, /url\(#bg\)/, 'neon SVG should use the rich dark gradient background');
+assert.match(minimalSvg, /MINIMAL EDITION • BASE/, 'minimal SVG should render the clean minimal layout');
+assert.match(minimalSvg, /fill="#f8fafc"/, 'minimal SVG should use clean light styling');
+assert.match(posterSvg, /CAST/, 'poster SVG should render the bold poster title');
+assert.match(posterSvg, /POSTER/, 'poster SVG should render the bold poster title');
+assert.match(posterSvg, /BUILDING ON BASE FROM/, 'poster SVG should uppercase cast text');
+assert.match(posterSvg, /A FARCASTER CAST/, 'poster SVG should keep wrapped uppercase text readable');
 assert.notEqual(neonSvg, minimalSvg, 'different NFT styles should not generate identical SVG images');
 assert.notEqual(minimalSvg, posterSvg, 'poster and minimal styles should not generate identical SVG images');
 const historyItem = createMintHistoryItem({
