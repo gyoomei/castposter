@@ -26,7 +26,8 @@ const SHARE_IMAGE_WIDTH = 1200;
 const SHARE_IMAGE_HEIGHT = 800;
 const WARPCAST_PAGE_LIMIT = 50;
 const SHARE_CARD_CACHE_SECONDS = 300;
-const SHARE_CARD_VERSION = '28';
+const SHARE_CARD_VERSION = '29';
+const SHARE_CARD_FALLBACK_PATH = '/share-card-fallback-v29.png';
 
 function escapeXml(value = ''): string {
   return value
@@ -334,6 +335,41 @@ async function pngResponse(svg: string): Promise<Response> {
   }
 }
 
+function fallbackShareImageUrl(requestUrl: URL): string {
+  const url = new URL(SHARE_CARD_FALLBACK_PATH, requestUrl.origin);
+  url.searchParams.set('v', SHARE_CARD_VERSION);
+  return url.toString();
+}
+
+async function fallbackShareImageResponse(requestUrl: URL, env: Env): Promise<Response> {
+  const assetRequest = new Request(fallbackShareImageUrl(requestUrl), { method: 'GET' });
+  const assetResponse = await env.ASSETS.fetch(assetRequest);
+
+  if (!assetResponse.ok) {
+    return Response.redirect(fallbackShareImageUrl(requestUrl), 302);
+  }
+
+  const headers = new Headers(assetResponse.headers);
+  headers.set('Content-Type', 'image/png');
+  headers.set('Cache-Control', `public, max-age=${SHARE_CARD_CACHE_SECONDS}`);
+  headers.set('Access-Control-Allow-Origin', '*');
+  headers.set('Vary', 'Origin');
+
+  return new Response(assetResponse.body, {
+    status: 200,
+    headers,
+  });
+}
+
+async function safePngResponse(svg: string, requestUrl: URL, env: Env): Promise<Response> {
+  try {
+    return await pngResponse(svg);
+  } catch (error) {
+    console.error('Share card PNG render failed; falling back to static PNG:', error);
+    return fallbackShareImageResponse(requestUrl, env);
+  }
+}
+
 function escapeHtml(value = ''): string {
   return escapeXml(value).replace(/'/g, '&#39;');
 }
@@ -441,7 +477,7 @@ const worker: WorkerExport = {
 
       const response = url.pathname === '/share'
         ? htmlResponse(sharePageHtml(url))
-        : await pngResponse(buildShareCardSvg(await getShareCardData(url)));
+        : await safePngResponse(buildShareCardSvg(await getShareCardData(url)), url, env);
       ctx.waitUntil(cache.put(cacheKey, response.clone()));
       return response;
     }
