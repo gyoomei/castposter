@@ -8,8 +8,10 @@ import {
   extractCastAuthorFromUrl,
   findCastInApiResponse,
   getCastHashFromUrl,
+  formatEditionLabel,
   isValidEvmAddress,
   normalizeCastUrl,
+  normalizeEditionNumber,
 } from './castNft';
 
 const PUBLIC_FARCASTER_API = '/api/warpcast';
@@ -40,6 +42,32 @@ const MINT_PRICE_ABI = [
     outputs: [{ name: 'price', type: 'uint256' }],
   },
 ] as const;
+const EDITION_READ_ABIS = [
+  {
+    label: 'nextTokenId',
+    mode: 'next',
+    abi: [{ type: 'function', name: 'nextTokenId', stateMutability: 'view', inputs: [], outputs: [{ name: 'tokenId', type: 'uint256' }] }] as const,
+    functionName: 'nextTokenId',
+  },
+  {
+    label: 'nextTokenID',
+    mode: 'next',
+    abi: [{ type: 'function', name: 'nextTokenID', stateMutability: 'view', inputs: [], outputs: [{ name: 'tokenId', type: 'uint256' }] }] as const,
+    functionName: 'nextTokenID',
+  },
+  {
+    label: 'totalSupply',
+    mode: 'supply',
+    abi: [{ type: 'function', name: 'totalSupply', stateMutability: 'view', inputs: [], outputs: [{ name: 'supply', type: 'uint256' }] }] as const,
+    functionName: 'totalSupply',
+  },
+  {
+    label: 'totalMinted',
+    mode: 'supply',
+    abi: [{ type: 'function', name: 'totalMinted', stateMutability: 'view', inputs: [], outputs: [{ name: 'minted', type: 'uint256' }] }] as const,
+    functionName: 'totalMinted',
+  },
+] as const;
 const EXPECTED_MINT_SELECTOR = keccak256(toBytes(`${MINT_FUNCTION_NAME}(address,string)`)).slice(2, 10).toLowerCase();
 const EXPECTED_MINT_SELECTOR_IN_BYTECODE = EXPECTED_MINT_SELECTOR.replace(/^0+/, '') || EXPECTED_MINT_SELECTOR;
 let mintCompatibilityChecked = false;
@@ -58,6 +86,7 @@ const state = {
   castUrl: '',
   minting: false,
   lastMintHash: '',
+  lastMintEditionNumber: undefined as number | undefined,
   previewStyle: 'neon' as CastMintPreviewStyle,
   detectedUser: '',
   isMiniApp: false,
@@ -153,7 +182,7 @@ function updatePreview() {
   updateFrameMeta();
 }
 
-const APP_VERSION = '27';
+const APP_VERSION = '28';
 
 function applyShareParams(url: URL, includeTextFallback = false): URL {
   const castHash = getCastHashFromUrl(state.castUrl);
@@ -176,7 +205,7 @@ function buildSharePageUrl(includeTextFallback = false): URL {
 }
 
 function updateFrameMeta() {
-  const imageUrl = applyShareParams(new URL('/api/share-card', window.location.origin), true);
+  const imageUrl = applyShareParams(new URL('/api/share-card.png', window.location.origin), true);
 
   document.querySelector<HTMLMetaElement>('meta[property="og:image"]')?.setAttribute('content', imageUrl.toString());
 
@@ -341,6 +370,37 @@ async function handleGenerate(e: Event) {
   }
 }
 
+
+async function readSequentialEditionNumber(provider: EthereumProvider): Promise<number | undefined> {
+  for (const candidate of EDITION_READ_ABIS) {
+    try {
+      const data = encodeFunctionData({
+        abi: candidate.abi,
+        functionName: candidate.functionName,
+        args: [],
+      });
+      const result = await provider.request({
+        method: 'eth_call',
+        params: [{ to: MINT_CONTRACT_ADDRESS, data }, 'latest'],
+      }) as `0x${string}`;
+      if (!result || result === '0x') continue;
+      const decoded = decodeFunctionResult({
+        abi: candidate.abi,
+        functionName: candidate.functionName,
+        data: result,
+      });
+      const raw = typeof decoded === 'bigint' ? decoded : BigInt(String(decoded));
+      const displayNumber = candidate.mode === 'supply' || raw === 0n ? raw + 1n : raw;
+      const normalized = normalizeEditionNumber(Number(displayNumber));
+      if (normalized) return normalized;
+    } catch (error) {
+      console.debug(`Edition read ${candidate.label} unavailable`, error);
+    }
+  }
+  const localNext = Math.max(0, ...state.history.map((item) => item.editionNumber || 0)) + 1;
+  return normalizeEditionNumber(localNext);
+}
+
 async function handleMint() {
   const mintBtn = document.getElementById('mintBtn') as HTMLButtonElement;
   const successActions = document.getElementById('successActions') as HTMLDivElement;
@@ -420,11 +480,13 @@ async function handleMint() {
       return;
     }
 
+    const editionNumber = await readSequentialEditionNumber(provider);
     const tokenUri = buildCastMintTokenUri({
       castText: state.castText,
       author: state.author,
       castUrl: state.castUrl,
       style: state.previewStyle,
+      editionNumber,
     });
 
     const data = encodeFunctionData({
@@ -444,6 +506,7 @@ async function handleMint() {
     }) as string;
 
     state.lastMintHash = txHash;
+    state.lastMintEditionNumber = editionNumber;
     const historyItem = createMintHistoryItem(
       {
         castText: state.castText,
@@ -451,11 +514,12 @@ async function handleMint() {
         castUrl: state.castUrl,
         txHash,
         style: state.previewStyle,
+        editionNumber,
       }
     );
     saveHistory(historyItem);
 
-    showToast('NFT minted successfully! 🎉');
+    showToast(`Minted ${formatEditionLabel(editionNumber)} successfully! 🎉`);
 
     if (mintBtn) mintBtn.hidden = true;
     if (successActions) successActions.hidden = false;
@@ -493,7 +557,8 @@ async function handleShare() {
   }
 
   const castAuthor = state.author ? `@${state.author.replace(/^@/, '')}` : 'a Farcaster creator';
-  const shareText = `I just minted ${castAuthor}'s Farcaster cast into a collectible NFT on Base 🎨`;
+  const editionLabel = formatEditionLabel(state.lastMintEditionNumber);
+  const shareText = `I just minted ${editionLabel} from ${castAuthor}'s Farcaster cast on Base 🎨`;
   const sharePageUrl = buildSharePageUrl(true);
 
   try {

@@ -1,3 +1,6 @@
+import { Resvg, initWasm } from '@resvg/resvg-wasm';
+import resvgWasmModule from '@resvg/resvg-wasm/index_bg.wasm';
+
 type Env = {
   ASSETS: {
     fetch(request: Request): Promise<Response>;
@@ -23,7 +26,7 @@ const SHARE_IMAGE_WIDTH = 1200;
 const SHARE_IMAGE_HEIGHT = 800;
 const WARPCAST_PAGE_LIMIT = 50;
 const SHARE_CARD_CACHE_SECONDS = 300;
-const SHARE_CARD_VERSION = '27';
+const SHARE_CARD_VERSION = '28';
 
 function escapeXml(value = ''): string {
   return value
@@ -309,8 +312,26 @@ function imageResponse(body: BodyInit, contentType: string): Response {
   }));
 }
 
-function svgResponse(svg: string): Response {
-  return imageResponse(svg, 'image/svg+xml; charset=utf-8');
+let resvgInitPromise: Promise<void> | null = null;
+
+async function ensureResvgReady(): Promise<void> {
+  if (!resvgInitPromise) {
+    resvgInitPromise = initWasm(resvgWasmModule);
+  }
+  return resvgInitPromise;
+}
+
+async function pngResponse(svg: string): Promise<Response> {
+  await ensureResvgReady();
+  const renderer = new Resvg(svg, {
+    fitTo: { mode: 'width', value: SHARE_IMAGE_WIDTH },
+  });
+  try {
+    const png = renderer.render().asPng();
+    return imageResponse(png, 'image/png');
+  } finally {
+    renderer.free();
+  }
 }
 
 function escapeHtml(value = ''): string {
@@ -324,7 +345,7 @@ function escapeMetaJson(value: string): string {
 function buildShareImageUrl(requestUrl: URL): string {
   const params = new URLSearchParams(requestUrl.searchParams);
   params.set('v', requestUrl.searchParams.get('v') || SHARE_CARD_VERSION);
-  return new URL(`/api/share-card?${params.toString()}`, requestUrl.origin).toString();
+  return new URL(`/api/share-card.png?${params.toString()}`, requestUrl.origin).toString();
 }
 
 function sharePageHtml(requestUrl: URL): string {
@@ -412,7 +433,7 @@ const worker: WorkerExport = {
       return withCors(new Response(null, { status: 204 }));
     }
 
-    if (url.pathname === '/api/share-card' || url.pathname === '/share') {
+    if (url.pathname === '/api/share-card' || url.pathname === '/api/share-card.png' || url.pathname === '/share') {
       const cache = (caches as CacheStorageWithDefault).default;
       const cacheKey = new Request(url.toString(), { method: 'GET' });
       const cached = await cache.match(cacheKey);
@@ -420,7 +441,7 @@ const worker: WorkerExport = {
 
       const response = url.pathname === '/share'
         ? htmlResponse(sharePageHtml(url))
-        : svgResponse(buildShareCardSvg(await getShareCardData(url)));
+        : await pngResponse(buildShareCardSvg(await getShareCardData(url)));
       ctx.waitUntil(cache.put(cacheKey, response.clone()));
       return response;
     }

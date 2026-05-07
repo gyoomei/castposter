@@ -12,5 +12,14 @@
   "compatibility_flags": [
     "nodejs_compat"
   ],
+  "rules": [
+    {
+      "type": "CompiledWasm",
+      "globs": [
+        "**/*.wasm"
+      ],
+      "fallthrough": true
+    }
+  ],
   "main": "./src/worker.ts"
 }

@@ -15,6 +15,7 @@ import {
 } from '../dist-test/castNft.js';
 
 const sample = 'Building on Base from a Farcaster cast 🚀';
+const parseTokenUri = (uri) => JSON.parse(Buffer.from(uri.split(',')[1], 'base64').toString('utf8'));
 
 assert.equal(getCastNftSeed(sample).length, 8, 'seed should be compact and deterministic');
 assert.equal(getCastNftSeed(sample), getCastNftSeed(sample), 'seed should be stable');
@@ -147,5 +148,27 @@ assert.deepEqual(
   { text: 'Full hash cast should match short cast URLs too', author: 'Forger' },
   'short Warpcast URL hashes should match full API hashes so preview follows the original cast',
 );
+
+
+const editionUri = buildCastMintTokenUri({
+  castText: 'Sequential mint test',
+  author: 'gyoo',
+  castUrl: 'https://warpcast.com/gyoo/0xabc',
+  style: 'minimal',
+  editionNumber: 1,
+});
+const editionMetadata = parseTokenUri(editionUri);
+assert.equal(editionMetadata.name, 'CastMint NFT #1', 'edition metadata names should use NFT #N');
+assert(editionMetadata.attributes.some((attr) => attr.trait_type === 'Edition' && attr.value === 'NFT #1'), 'edition attribute should be present');
+
+const invalidEditionUri = buildCastMintTokenUri({
+  castText: 'Invalid edition test',
+  author: 'gyoo',
+  castUrl: 'https://warpcast.com/gyoo/0xdef',
+  style: 'minimal',
+  editionNumber: 10001,
+});
+const invalidEditionMetadata = parseTokenUri(invalidEditionUri);
+assert(!invalidEditionMetadata.attributes.some((attr) => attr.trait_type === 'Edition'), 'invalid edition numbers should be ignored');
 
 console.log('cast-nft tests passed');

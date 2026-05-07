@@ -3,6 +3,7 @@ export type CastNftInput = {
   author: string;
   castUrl?: string;
   style?: CastMintPreviewStyle;
+  editionNumber?: number;
 };
 
 export type CastNftMetadata = {
@@ -33,6 +34,7 @@ export type CastMintHistoryItem = {
   txHash: string;
   mintedAt: string;
   style: CastMintPreviewStyle;
+  editionNumber?: number;
 };
 
 export function getPreviewStyle(value = ''): CastMintPreviewStyle {
@@ -53,6 +55,7 @@ export function createMintHistoryItem(input: CastNftInput & { txHash: string; mi
     txHash: input.txHash.trim(),
     mintedAt: input.mintedAt || new Date().toISOString(),
     style: getPreviewStyle(input.style),
+    editionNumber: normalizeEditionNumber(input.editionNumber),
   };
 }
 
@@ -93,6 +96,17 @@ export function getCastNftSeed(castText: string): string {
     hash = Math.imul(hash, 0x01000193);
   }
   return (hash >>> 0).toString(16).padStart(8, '0');
+}
+
+export function normalizeEditionNumber(value?: number): number | undefined {
+  if (!Number.isFinite(value)) return undefined;
+  const normalized = Math.trunc(Number(value));
+  return normalized >= 1 && normalized <= 10000 ? normalized : undefined;
+}
+
+export function formatEditionLabel(value?: number): string {
+  const edition = normalizeEditionNumber(value);
+  return edition ? `NFT #${edition}` : 'NFT #—';
 }
 
 export function normalizeCastUrl(rawUrl: string): string {
@@ -233,18 +247,19 @@ function buildTextLines(lines: string[], x: number, startY: number, lineHeight: 
     .join('\n  ');
 }
 
-function buildMinimalImageSvg(cleanAuthor: string, seed: string, cleanCast: string): string {
+function buildMinimalImageSvg(cleanAuthor: string, seed: string, cleanCast: string, editionLabel: string): string {
   const castFit = fitSvgText(cleanCast, { boxWidth: 900, boxHeight: 540, maxFontSize: 66, minFontSize: 34 });
   const castTextLines = buildTextLines(castFit.lines, 126, 565, castFit.lineHeight);
   const safeAuthor = escapeXml(cleanAuthor);
   const safeSeed = escapeXml(seed);
+  const safeEditionLabel = escapeXml(editionLabel);
   return `<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="1600" viewBox="0 0 1200 1600">
   <rect width="1200" height="1600" rx="72" fill="#f8fafc"/>
   <rect x="78" y="86" width="1044" height="1428" rx="56" fill="#ffffff" stroke="#dbe4ef" stroke-width="4"/>
   <circle cx="1010" cy="210" r="88" fill="#e0f2fe"/>
   <circle cx="922" cy="294" r="44" fill="#fef3c7"/>
   <text x="126" y="180" fill="#0f172a" font-family="Arial,sans-serif" font-size="44" font-weight="900" letter-spacing="7">CASTMINT</text>
-  <text x="126" y="236" fill="#64748b" font-family="Arial,sans-serif" font-size="24" font-weight="800">MINIMAL EDITION • BASE</text>
+  <text x="126" y="236" fill="#64748b" font-family="Arial,sans-serif" font-size="24" font-weight="800">MINIMAL EDITION • BASE • ${safeEditionLabel}</text>
   <line x1="126" y1="315" x2="1074" y2="315" stroke="#e2e8f0" stroke-width="3"/>
   <text x="126" y="445" fill="#cbd5e1" font-family="Georgia,serif" font-size="156" font-weight="900">“</text>
   <g fill="#0f172a" font-family="Arial,sans-serif" font-size="${castFit.fontSize}" font-weight="900" dominant-baseline="text-before-edge">
@@ -257,12 +272,13 @@ function buildMinimalImageSvg(cleanAuthor: string, seed: string, cleanCast: stri
 </svg>`;
 }
 
-function buildPosterImageSvg(cleanAuthor: string, seed: string, cleanCast: string): string {
+function buildPosterImageSvg(cleanAuthor: string, seed: string, cleanCast: string, editionLabel: string): string {
   const posterCast = cleanCast.toUpperCase();
   const castFit = fitSvgText(posterCast, { boxWidth: 900, boxHeight: 600, maxFontSize: 72, minFontSize: 32 });
   const castTextLines = buildTextLines(castFit.lines, 126, 505, castFit.lineHeight);
   const safeAuthor = escapeXml(cleanAuthor);
   const safeSeed = escapeXml(seed);
+  const safeEditionLabel = escapeXml(editionLabel);
   return `<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="1600" viewBox="0 0 1200 1600">
   <defs>
     <linearGradient id="posterBg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ff4d00"/><stop offset=".48" stop-color="#7c2d12"/><stop offset="1" stop-color="#050505"/></linearGradient>
@@ -280,15 +296,15 @@ function buildPosterImageSvg(cleanAuthor: string, seed: string, cleanCast: strin
   <rect x="126" y="1230" width="948" height="170" fill="#fde047"/>
   <text x="166" y="1302" fill="#111" font-family="Arial,sans-serif" font-size="28" font-weight="950" letter-spacing="3">ORIGINAL CASTER</text>
   <text x="166" y="1372" fill="#111" font-family="Arial,sans-serif" font-size="54" font-weight="950">@${safeAuthor}</text>
-  <text x="126" y="1468" fill="#fff" font-family="Arial,sans-serif" font-size="30" font-weight="900">BASE • #${safeSeed}</text>
+  <text x="126" y="1468" fill="#fff" font-family="Arial,sans-serif" font-size="30" font-weight="900">BASE • ${safeEditionLabel} • #${safeSeed}</text>
 </svg>`;
 }
 
-function buildNeonImageSvg(cleanAuthor: string, seed: string, cleanCast: string): string {
+function buildNeonImageSvg(cleanAuthor: string, _seed: string, cleanCast: string, editionLabel: string): string {
   const castFit = fitSvgText(cleanCast, { boxWidth: 900, boxHeight: 520, maxFontSize: 60, minFontSize: 30 });
   const castTextLines = buildTextLines(castFit.lines, 128, 650, castFit.lineHeight);
   const safeAuthor = escapeXml(cleanAuthor);
-  const safeSeed = escapeXml(seed);
+  const safeEditionLabel = escapeXml(editionLabel);
   return `<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="1600" viewBox="0 0 1200 1600">
   <defs>
     <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#02040a"/><stop offset=".35" stop-color="#0b1224"/><stop offset=".70" stop-color="#1a1035"/><stop offset="1" stop-color="#3a0a3d"/></linearGradient>
@@ -305,7 +321,7 @@ function buildNeonImageSvg(cleanAuthor: string, seed: string, cleanCast: string)
   <rect x="68" y="76" width="1064" height="1448" rx="80" fill="rgba(255,255,255,.045)" stroke="url(#border)" stroke-width="4"/>
   <text x="126" y="172" fill="url(#titleGrad)" font-family="Arial,sans-serif" font-size="46" font-weight="900" letter-spacing="10">CASTMINT</text>
   <rect x="126" y="196" width="180" height="3" rx="1.5" fill="#55e7ff" opacity=".85"/>
-  <text x="848" y="172" fill="#ffd166" font-family="Arial,sans-serif" font-size="38" font-weight="900">#${safeSeed}</text>
+  <text x="798" y="172" fill="#ffd166" font-family="Arial,sans-serif" font-size="38" font-weight="900">${safeEditionLabel}</text>
   <text x="126" y="246" fill="#55e7ff" font-family="Arial,sans-serif" font-size="22" font-weight="800" letter-spacing="4">MINTED ON BASE</text>
   <text x="130" y="510" fill="rgba(255,255,255,.18)" font-family="Georgia,serif" font-size="240" font-weight="900">“</text>
   <g fill="#ffffff" font-family="Arial,sans-serif" font-size="${castFit.fontSize}" font-weight="900" dominant-baseline="text-before-edge">
@@ -327,9 +343,11 @@ export function buildCastMintImageSvg(input: CastNftInput): string {
   const style = getPreviewStyle(input.style);
   const seed = getCastNftSeed(`${style}:${cleanAuthor}:${cleanCast}`);
 
-  if (style === 'minimal') return buildMinimalImageSvg(cleanAuthor, seed, cleanCast);
-  if (style === 'poster') return buildPosterImageSvg(cleanAuthor, seed, cleanCast);
-  return buildNeonImageSvg(cleanAuthor, seed, cleanCast);
+  const editionLabel = formatEditionLabel(input.editionNumber);
+
+  if (style === 'minimal') return buildMinimalImageSvg(cleanAuthor, seed, cleanCast, editionLabel);
+  if (style === 'poster') return buildPosterImageSvg(cleanAuthor, seed, cleanCast, editionLabel);
+  return buildNeonImageSvg(cleanAuthor, seed, cleanCast, editionLabel);
 }
 
 export function buildCastMintImageDataUri(input: CastNftInput): string {
@@ -369,15 +387,17 @@ export function buildCastNftMetadata(input: CastNftInput): CastNftMetadata {
   const cleanAuthor = input.author.trim().replace(/^@/, '') || 'caster';
   const style = getPreviewStyle(input.style);
   const seed = getCastNftSeed(`${style}:${cleanAuthor}:${cleanCast}`);
+  const editionNumber = normalizeEditionNumber(input.editionNumber);
 
   return {
-    name: `CastMint #${seed}`,
+    name: editionNumber ? `CastMint ${formatEditionLabel(editionNumber)}` : `CastMint #${seed}`,
     description: `A collectible NFT generated from this Farcaster cast: “${cleanCast}”`,
     external_url: normalizeCastUrl(input.castUrl || '') || undefined,
     attributes: [
       { trait_type: 'Source', value: 'Farcaster Cast' },
       { trait_type: 'Creator', value: `@${cleanAuthor}` },
       { trait_type: 'Cast Seed', value: seed },
+      ...(editionNumber ? [{ trait_type: 'Edition', value: formatEditionLabel(editionNumber) }] : []),
       { trait_type: 'Style', value: style.charAt(0).toUpperCase() + style.slice(1) },
       { trait_type: 'Chain', value: 'Base' },
     ],
