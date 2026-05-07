@@ -153,7 +153,7 @@ function updatePreview() {
   updateFrameMeta();
 }
 
-const APP_VERSION = '26';
+const APP_VERSION = '27';
 
 function applyShareParams(url: URL, includeTextFallback = false): URL {
   const castHash = getCastHashFromUrl(state.castUrl);
@@ -176,7 +176,7 @@ function buildSharePageUrl(includeTextFallback = false): URL {
 }
 
 function updateFrameMeta() {
-  const imageUrl = new URL(`/og.png?v=${APP_VERSION}`, window.location.origin);
+  const imageUrl = applyShareParams(new URL('/api/share-card', window.location.origin), true);
 
   document.querySelector<HTMLMetaElement>('meta[property="og:image"]')?.setAttribute('content', imageUrl.toString());
 
@@ -494,7 +494,7 @@ async function handleShare() {
 
   const castAuthor = state.author ? `@${state.author.replace(/^@/, '')}` : 'a Farcaster creator';
   const shareText = `I just minted ${castAuthor}'s Farcaster cast into a collectible NFT on Base 🎨`;
-  const sharePageUrl = buildSharePageUrl(false);
+  const sharePageUrl = buildSharePageUrl(true);
 
   try {
     if (state.isMiniApp) {

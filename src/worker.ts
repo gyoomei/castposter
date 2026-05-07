@@ -23,7 +23,7 @@ const SHARE_IMAGE_WIDTH = 1200;
 const SHARE_IMAGE_HEIGHT = 800;
 const WARPCAST_PAGE_LIMIT = 50;
 const SHARE_CARD_CACHE_SECONDS = 300;
-const SHARE_CARD_VERSION = '26';
+const SHARE_CARD_VERSION = '27';
 
 function escapeXml(value = ''): string {
   return value
